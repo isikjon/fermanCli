@@ -9,6 +9,7 @@ import useCartStore from '../store/cart'
 import { IFavorite } from '../types'
 import useFavoriteStore from '../store/favorite'
 import { useNavigation } from '@react-navigation/native'
+import { formatPrice } from '../functions'
 
 interface Props {
     item: IFavorite
@@ -21,7 +22,7 @@ const FavoriteCard: FC<Props> = ({ item }) => {
     const { cartList, addItemToCart } = useCartStore()
     const [inCart, setInCart] = useState(false)
     const { removeItemFromFav } = useFavoriteStore()
-    const price = item.isWeighted ? item.price * (item.weight || 0.1) : item.price
+    const price = formatPrice(item.isWeighted ? item.price * (item.weight || 0.1) : item.price)
 
     const getImageUrl = useCallback(async () => {
         const imageMetadata = await getImage(item.image)
@@ -41,7 +42,7 @@ const FavoriteCard: FC<Props> = ({ item }) => {
         <View style={styles.FavoriteCard}>
             <TouchableOpacity
                 activeOpacity={0.5}
-                onPress={() => navigation.navigate('Product', { productId: item.id })}
+                onPress={() => navigation.navigate('product' as never, { id: item.id } as never)}
             >
                 <Row gap={24}>
                     {image ? (

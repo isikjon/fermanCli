@@ -1,5 +1,5 @@
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
-import React, { FC } from 'react'
+import React, { forwardRef } from 'react'
 import Txt from './Text'
 import { CustomSvgProps } from '../types'
 
@@ -12,16 +12,19 @@ interface Props {
     readonly?: boolean
     maxLenght?: number
     isNumber?: boolean
-    onFocus?: () => void  // вот это добавили
+    onFocus?: () => void
+    autoFocus?: boolean
+    multiline?: boolean
 }
 
-const Input: FC<Props> = ({ onChange, label, placeholder, value, withIcon, readonly, maxLenght, isNumber, onFocus }) => {
+const Input = forwardRef<TextInput, Props>(({ onChange, label, placeholder, value, withIcon, readonly, maxLenght, isNumber, onFocus, autoFocus, multiline }, ref) => {
     return (
         <View style={styles.InputBox}>
             {label && <Txt size={16} weight='Bold'>{label}</Txt>}
 
             <View style={styles.Input}>
                 <TextInput
+                    ref={ref}
                     style={styles.InputElement}
                     value={value}
                     placeholder={placeholder}
@@ -30,7 +33,12 @@ const Input: FC<Props> = ({ onChange, label, placeholder, value, withIcon, reado
                     readOnly={readonly}
                     maxLength={maxLenght}
                     keyboardType={isNumber ? "numeric" : "default"}
-                    onFocus={onFocus}  // прокидываем
+                    onFocus={onFocus}
+                    autoFocus={autoFocus}
+                    multiline={multiline}
+                    showSoftInputOnFocus={true}
+                    autoCorrect={false}
+                    autoCapitalize="none"
                 />
                 {withIcon && (
                     <TouchableOpacity activeOpacity={0.5} onPress={withIcon.onClick}>
@@ -40,7 +48,9 @@ const Input: FC<Props> = ({ onChange, label, placeholder, value, withIcon, reado
             </View>
         </View>
     )
-}
+})
+
+Input.displayName = 'Input'
 
 export default Input
 

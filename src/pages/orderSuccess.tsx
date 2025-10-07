@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Txt from '../ui/Text';
 import Button from '../ui/Button';
+import { formatPrice } from '../functions';
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,7 +51,7 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ route }) => {
                             Сумма заказа:
                         </Txt>
                         <Txt size={36} weight="Bold" color="#fff" style={styles.amountText}>
-                            {orderAmount.toFixed(2)} руб.
+                            {formatPrice(orderAmount)} руб.
                         </Txt>
                     </View>
                 )}

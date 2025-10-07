@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import useNotificationStore from '../notification'
 import useCartStore from '../cart'
-import { calculateDeliveryPrice, getZoneForLocation } from '../../functions'
+import { calculateDeliveryPrice, getZoneForLocation, formatPrice } from '../../functions'
 import useDeliveryStore from '../delivery'
 import api from '../../api'
 import { IOrder, OrderItemType } from '../../types'
@@ -81,7 +81,7 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
 
             const items: OrderItemType[] = cartList.map(i => ({
                 amount: Number((i.isWeighted && i.weight) ? (i.amount * i.weight).toFixed(1) : i.amount),
-                price: Number((i.isWeighted && i.weight) ? i.price : (i.price * i.amount).toFixed()),
+                price: Number((i.isWeighted && i.weight) ? formatPrice(i.price) : formatPrice(i.price * i.amount)),
                 productId: i.id
             }))
             const itemsWithDelivery = [...items, {

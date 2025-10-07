@@ -39,7 +39,9 @@ import { setNavigationCallback } from './store/auth';
 import { List } from './components/Sections/Catalog';
 import MinOrderBanner from './components/MinOrderBanner';
 import useGlobalStore from './store';
-import Alert from './ui/Alert'; 
+import Alert from './ui/Alert';
+import AddressModal from './ui/AddressModal';
+import useAddressModalStore from './store/addressModal'; 
 
 LogBox.ignoreAllLogs();
 
@@ -77,7 +79,8 @@ const CustomTheme = {
 
 function RootLayout() {
   const [currentRoute, setCurrentRoute] = useState('welcome');
-  const { isAuth, isDeliverySet } = useGlobalStore();
+  const { isAuth, isDeliverySet, hideNavigation } = useGlobalStore();
+  const { isOpen: isAddressModalOpen, closeModal: closeAddressModal } = useAddressModalStore();
 
   useEffect(() => {
     setNavigationCallback((route: string, reset?: boolean) => {
@@ -149,13 +152,14 @@ function RootLayout() {
               <Stack.Screen name='notifications' component={Notifications} />
               <Stack.Screen name='orderSuccess' component={OrderSuccess} />
             </Stack.Navigator>
-            {showNavigation && (
+            {showNavigation && !hideNavigation && (
               <View style={styles.NavWrapper}>
                 <MinOrderBanner currentRoute={currentRoute} />
                 <Navigation />
               </View>
             )}
             <Alert />
+            <AddressModal visible={isAddressModalOpen} onClose={closeAddressModal} />
             <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
           </View>
         </SafeAreaView>

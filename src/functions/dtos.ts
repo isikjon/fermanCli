@@ -1,7 +1,7 @@
-import { ICategory, OrderItemType, OrderType, ProductType } from "@/types"
+import { ICategory, OrderItemType, OrderType, ProductType } from "../types"
 import { fillIconForCategory } from "."
 import { SvgProps } from "react-native-svg"
-import api from "@/api"
+import api from "../api"
 
 type CategoryNode = ICategory & {
     icon: React.FC<SvgProps> | null
@@ -59,19 +59,35 @@ export function CategoryDTO(data: ICategory[]) {
 }
 
 export function ProductDTO(data: any) {
-    const formattedArray: ProductType[] = data.map((product: any) => ({
-        image: product?.images?.meta.href,
-        price: product?.salePrices[0].value / 100,
-        name: product?.name,
-        id: product?.id,
-        description: product.description,
-        pathName: product.pathName,
-        country: product?.country?.meta.href,
-        volume: product?.volume,
-        weight: product?.weight,
-        weighed: product?.weighed || false,
-        stock: product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined
-    }))
+    const formattedArray: ProductType[] = data.map((product: any) => {
+        const stock = product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined;
+        
+        // Логируем обработку остатков для отладки
+        if (product?.id) {
+            console.log('🔄 ProductDTO processing:', {
+                id: product.id,
+                name: product.name?.substring(0, 40),
+                rawStock: product?.stock,
+                rawQuantity: product?.quantity,
+                rawStockStore: product?.stockStore,
+                finalStock: stock
+            });
+        }
+        
+        return {
+            image: product?.images?.meta.href,
+            price: product?.salePrices[0].value / 100,
+            name: product?.name,
+            id: product?.id,
+            description: product.description,
+            pathName: product.pathName,
+            country: product?.country?.meta.href,
+            volume: product?.volume,
+            weight: product?.weight,
+            weighed: product?.weighed || false,
+            stock: stock
+        };
+    })
 
     return formattedArray
 }

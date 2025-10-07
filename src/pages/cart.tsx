@@ -70,16 +70,19 @@ const styles = StyleSheet.create({
         paddingVertical: 100,
     },
     EmptyIcon: {
-        marginBottom: 24,
+        marginBottom: 40,
         opacity: 0.3,
     },
     EmptyTitle: {
-        marginBottom: 12,
+        marginTop: 10,
+        marginBottom: 24,
         textAlign: 'center',
     },
     EmptySubtitle: {
-        marginBottom: 32,
+        marginTop: 10,
+        marginBottom: 48,
         textAlign: 'center',
+        lineHeight: 24,
     },
     EmptyButton: {
         width: '100%',

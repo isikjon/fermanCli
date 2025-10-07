@@ -11,8 +11,8 @@ type RootStackParamList = {
 }
 
 const Categories = () => {
-    const { changeCategory, catalogList } = useCatalogStore()
-    const route = useRoute<RouteProp<RootStackParamList, 'Categories'>>() // получаем параметры из навигатора
+    const { changeCategory, catalogList, category } = useCatalogStore()
+    const route = useRoute<RouteProp<RootStackParamList, 'Categories'>>()
     const { id } = route.params
 
     const activeCatalogItem = catalogList.find(i => i.id === id)
@@ -28,16 +28,23 @@ const Categories = () => {
             </Txt>
 
             <View style={styles.List}>
-                {filteredSubCategories?.map((item, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        style={styles.Item}
-                        onPress={() => changeCategory(item.id)}
-                    >
-                        {/* <item.icon width={24} height={24} /> */}
-                        <Txt weight="Bold">{item.name}</Txt>
-                    </TouchableOpacity>
-                ))}
+                {filteredSubCategories?.map((item, index) => {
+                    const isActive = category === item.id
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            style={[
+                                styles.Item,
+                                isActive && styles.ItemActive
+                            ]}
+                            onPress={() => changeCategory(item.id)}
+                        >
+                            <Txt weight="Bold" color={isActive ? "#4FBD01" : "#4D4D4D"}>
+                                {item.name}
+                            </Txt>
+                        </TouchableOpacity>
+                    )
+                })}
             </View>
         </View>
     )
@@ -69,5 +76,10 @@ const styles = StyleSheet.create({
         gap: 10,
         borderWidth: 1,
         borderColor: "rgba(77, 77, 77, 0.5)"
+    },
+    ItemActive: {
+        borderColor: "#4FBD01",
+        borderWidth: 2,
+        backgroundColor: '#F0F9EC'
     }
 })

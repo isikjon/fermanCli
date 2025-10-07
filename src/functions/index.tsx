@@ -8,6 +8,10 @@ import { postitionsDTO } from './dtos';
 import { IOrder, SlotType } from '../types';
 
 
+export function formatPrice(price: number): string {
+    return price.toFixed(2);
+}
+
 export function generateCode(length = 4) {
     return Math.floor(Math.pow(10, length - 1) + Math.random() * 9 * Math.pow(10, length - 1)).toString();
 }

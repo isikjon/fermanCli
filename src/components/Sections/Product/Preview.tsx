@@ -1,62 +1,77 @@
 import { Dimensions, Image, StyleSheet, View } from 'react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import RoundButton from '../../../ui/RoundButton'
 import Icons from '../../../ui/Icons'
 import Empty from '../../../assets/svg/Empty'
 import useCatalogStore from '../../../store/catalog'
 import useFavoriteStore from '../../../store/favorite'
 import { IFavorite } from '../../../types'
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
-
-// Типы для параметров навигации
-type RootStackParamList = {
-    Product: { productId: string }
-}
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 
 const Preview = () => {
-    const { getProduct, activeProduct, activeProductImage } = useCatalogStore()
-    const { inFavExist, addItemToFav, removeItemFromFav, getFavoriteList } = useFavoriteStore()
+    const { activeProduct, activeProductImage, getImage } = useCatalogStore()
+    const { addItemToFav, removeItemFromFav, getFavoriteList, favoriteList } = useFavoriteStore()
 
     const navigation = useNavigation()
-    const route = useRoute<RouteProp<RootStackParamList, 'Product'>>()
-    const { productId } = route.params
-    console.log(activeProductImage)
-    console.log(activeProduct?.image)
-    const isExist = inFavExist(productId)
-    const { getImage } = useCatalogStore()
+    const route = useRoute<any>()
+    const productId = route.params?.id
     const [image, setImage] = useState<string | null>(null)
-   const getImageUrl = useCallback(async () => {
+    const isMounted = useRef(true)
+    
+    const isExist = useMemo(() => {
+        const exists = favoriteList.some(item => item.id === productId)
+        console.log('Проверка избранного для товара:', productId, 'Результат:', exists, 'Список:', favoriteList.length)
+        return exists
+    }, [favoriteList, productId])
 
-        const imageMetadata = await getImage(activeProduct?.image, false)
-        console.log("imageMetadata",imageMetadata)
-        setImage(imageMetadata || null)
-    }, [activeProduct?.image])
+    const getImageUrl = useCallback(async () => {
+        if (!activeProduct?.image) return
+        const imageMetadata = await getImage(activeProduct.image, false)
+        if (isMounted.current) {
+            setImage(imageMetadata || null)
+        }
+    }, [activeProduct?.image, getImage])
 
-    function handleLike() {
+    const handleLike = useCallback(() => {
         if (!activeProduct) return
 
         const payload: IFavorite = {
-            id: activeProduct?.id,
-            image: activeProduct?.image,
-            name: activeProduct?.name,
-            price: activeProduct?.price,
-            isWeighted: activeProduct?.weighed,
+            id: activeProduct.id,
+            image: activeProduct.image,
+            name: activeProduct.name,
+            price: activeProduct.price,
+            isWeighted: activeProduct.weighed,
             weight: 0.1,
-            stock: activeProduct?.stock
+            stock: activeProduct.stock
         }
 
-        isExist ? removeItemFromFav(activeProduct?.id) : addItemToFav(payload)
-    }
+        if (isExist) {
+            console.log('Удаляем из избранного:', activeProduct.id)
+            removeItemFromFav(activeProduct.id)
+        } else {
+            console.log('Добавляем в избранное:', activeProduct.id)
+            addItemToFav(payload)
+        }
+    }, [activeProduct, isExist, removeItemFromFav, addItemToFav])
+
+    useFocusEffect(
+        useCallback(() => {
+            getFavoriteList()
+        }, [getFavoriteList])
+    )
 
     useEffect(() => {
-        getProduct(productId)
-    
-    }, [productId, getProduct])
+        isMounted.current = true
+        return () => {
+            isMounted.current = false
+        }
+    }, [])
 
     useEffect(() => {
-        getFavoriteList()
-        getImageUrl()
-    }, [getFavoriteList,getImageUrl])
+        if (activeProduct?.image) {
+            getImageUrl()
+        }
+    }, [activeProduct?.image, getImageUrl])
 
     return (
         <View style={styles.Preview}>
@@ -83,7 +98,7 @@ const Preview = () => {
                         <Icons.Share />
                     </RoundButton>
                     <RoundButton onClick={handleLike}>
-                        <Icons.Heard isBold={isExist} />
+                        <Icons.Heard isBold={isExist} color={isExist ? "#EF2D45" : "#4D4D4D"} />
                     </RoundButton>
                 </View>
             </View>

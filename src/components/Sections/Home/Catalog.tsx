@@ -16,6 +16,7 @@ import { ICategory } from '../../../types';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../../RootLayout';
 import Header from '../../Header';
+import LoadingSpinner from '../../../ui/LoadingSpinner';
 
 interface Props {
   showHeader?: boolean;
@@ -102,7 +103,7 @@ const Catalog = ({ showHeader = false, scrollRef }: Props) => {
       <TouchableWithoutFeedback>
         <View style={styles.CatalogContainer}>
           {isLoading ? (
-            <Txt>Загрузка...</Txt>
+            <LoadingSpinner message="Загружаем каталог..." />
           ) : (
             <FlatList
               data={[greenPrices, ...sortedList]}
@@ -115,8 +116,7 @@ const Catalog = ({ showHeader = false, scrollRef }: Props) => {
               getItemLayout={getItemLayout}
               contentContainerStyle={{
                 flexGrow: 1,
-                paddingBottom: 100,
-                minHeight: Dimensions.get('window').height,
+                paddingBottom: '5%',
               }}
               scrollEnabled={true}
               bounces={true}
@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
   Container: {
     flex: 1,
     backgroundColor: '#fff',
-    marginBottom: 70,
   },
   CatalogContainer: {
     flex: 1,

@@ -5,7 +5,7 @@ import Row from '../../../components/Row'
 import Button from '../../../ui/Button'
 import { useNavigation } from '@react-navigation/native'
 import useCartStore from '../../../store/cart'
-import { calculateDeliveryPrice, getZoneForLocation } from '../../../functions'
+import { calculateDeliveryPrice, getZoneForLocation, formatPrice } from '../../../functions'
 import useDeliveryStore from '../../../store/delivery'
 import useGlobalStore from '../../../store'
 import useCheckoutStore from '../../../store/checkout'
@@ -44,13 +44,13 @@ const Total = () => {
     return (
         <View style={styles.Total}>
             {deliveryData?.type === 0
-                ? <Txt size={18}>Доставка: {deliveryPrice} руб.</Txt>
+                ? <Txt size={18}>Доставка: {formatPrice(deliveryPrice)} руб.</Txt>
                 : <Txt size={18}>Самовывоз: Бесплатно</Txt>
             }
 
             <View style={styles.Box}>
                 <Row>
-                    <Txt size={24} weight='Bold'>Итого: {(calculateAmount() + deliveryPrice).toFixed()} руб.</Txt>
+                    <Txt size={24} weight='Bold'>Итого: {formatPrice(calculateAmount() + deliveryPrice)} руб.</Txt>
                     <Txt size={18}>Товары: {cartList.length}</Txt>
                 </Row>
 

@@ -3,13 +3,15 @@ import { State } from './types'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatPrice } from '../../functions';
 
 const useCartStore = create<State>()(devtools((set, get) => ({
     cartList: [],
 
     calculateAmount: () => {
         const cartList = get().cartList;
-        return cartList.reduce((total, item) => total + item.amount * (item.isWeighted ? item.price * (item.weight || 0.1) : item.price), 0);
+        const total = cartList.reduce((sum, item) => sum + item.amount * (item.isWeighted ? item.price * (item.weight || 0.1) : item.price), 0);
+        return parseFloat(formatPrice(total));
     },
 
     addItemToCart: async (item: CartType) => {

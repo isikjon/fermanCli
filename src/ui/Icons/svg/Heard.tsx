@@ -3,8 +3,7 @@ import { CustomSvgProps } from '@/types'
 import Svg, { Path } from "react-native-svg"
 
 const Heard: React.FC<CustomSvgProps> = ({ color, isBold = false, ...props }) => {
-    // Если в избранном (isBold=true), показываем красное сердечко
-    const fillColor = isBold ? "#FF0000" : (color || "#4D4D4D");
+    const fillColor = isBold ? (color || "#EF2D45") : (color || "#4D4D4D");
     
     return (
         <>

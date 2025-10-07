@@ -48,7 +48,7 @@ const useBonusStore = create<State>()(devtools((set, get) => ({
         const bonusAmount = bonusType === 0 ? totalOrderPrice * 0.30 : totalOrderPrice * 0.02
         const totalBonus = bonuses < bonusAmount ? bonuses : bonusAmount
 
-        return totalBonus.toFixed()
+        return Math.round(totalBonus)
     }
 })))
 

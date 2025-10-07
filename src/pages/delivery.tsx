@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, Dimensions } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 import FullLogo from '../assets/FullLogo';
 import Tabs from '../components/Tabs';
@@ -7,8 +7,8 @@ import useDeliveryStore from '../store/delivery';
 import Back from '../ui/Back';
 import { useNavigation } from '@react-navigation/native';
 import useGlobalStore from '../store';
-import Button from '../ui/Button';
 import Txt from '../ui/Text';
+import ContinueButton from '../ui/ContinueButton';
 
 const Delivery = () => {
     const navigation = useNavigation();
@@ -45,7 +45,7 @@ const Delivery = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // если нужен отступ под header
         >
-            <ScrollView ref={scrollRef} style={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
+            <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
                 <View>
                     <FullLogo />
                     {!isDeliveryRequired && (
@@ -67,16 +67,17 @@ const Delivery = () => {
                         tabs={[<Sections.Delivery.Address scrollRef={scrollRef} />, <Sections.Delivery.SelfPickup />]}
                     />
                     <View style={styles.ButtonContainer}>
-                        <Button 
-                            height={56} 
-                            onClick={handleContinue}
-                            disabled={!deliveryData}
+                        <ContinueButton 
+                            buttonHeight={56} 
+                            onPress={handleContinue}
+                            isDisabled={!deliveryData}
                         >
                             <Txt color="#fff" weight="Bold" size={18}>
                                 Продолжить
                             </Txt>
-                        </Button>
+                        </ContinueButton>
                     </View>
+                    <View style={styles.DebugSpacerBottom} />
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -108,5 +109,9 @@ const styles = StyleSheet.create({
     },
     InfoText: {
         opacity: 0.7,
+    },
+    DebugSpacerBottom: {
+        height: Dimensions.get('window').height * 0.15,
+        backgroundColor: 'transparent',
     },
 });

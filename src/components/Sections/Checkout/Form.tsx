@@ -12,7 +12,7 @@ import useCartStore from '../../../store/cart'
 import useDeliveryStore from '../../../store/delivery'
 import { selfPickupList } from '../../../constants'
 import useBonusStore from '../../../store/bonus'
-import { calculateDeliveryPrice, getSlots, getZoneForLocation } from '../../../functions'
+import { calculateDeliveryPrice, getSlots, getZoneForLocation, formatPrice } from '../../../functions'
 import useCheckoutStore from '../../../store/checkout'
 import CartItem from '../../../ui/CartItem'
 
@@ -157,7 +157,7 @@ const Form = () => {
                 {deliveryData?.type === 0
                     ? <Row>
                         <Txt>Доставка</Txt>
-                        <Txt>{deliveryPrice} руб.</Txt>
+                        <Txt>{formatPrice(deliveryPrice)} руб.</Txt>
                     </Row>
                     : <Row>
                         <Txt>Самовывоз</Txt>
@@ -172,7 +172,7 @@ const Form = () => {
 
                 <Row>
                     <Txt weight='Bold' size={16}>Стоимость заказа</Txt>
-                    <Txt weight='Bold' size={16}>{(calculateAmount() + deliveryPrice - (bonusType === 0 ? bonusAmount : 0)).toFixed()} руб.</Txt>
+                    <Txt weight='Bold' size={16}>{formatPrice(calculateAmount() + deliveryPrice - (bonusType === 0 ? bonusAmount : 0))} руб.</Txt>
                 </Row>
             </View>
 
@@ -191,7 +191,7 @@ const Form = () => {
                 <Txt size={14} color="#FF0000" style={{ textAlign: 'center', marginTop: -16 }}>
                     {cartList.length === 0 
                         ? 'Корзина пуста' 
-                        : `Добавьте ещё ${(minOrderAmount - currentAmount).toFixed()} руб. для оформления`}
+                        : `Добавьте ещё ${formatPrice(minOrderAmount - currentAmount)} руб. для оформления`}
                 </Txt>
             )}
         </View>

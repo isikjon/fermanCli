@@ -12,6 +12,8 @@ import ProductCard from '../../../ui/ProductCard';
 import { categoriesList } from '../../../constants';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Pagination from '../../Pagination';
+import LoadingSpinner from '../../../ui/LoadingSpinner';
+import ProductCardSkeleton from '../../../ui/ProductCardSkeleton';
 
 type RootStackParamList = {
   List: { id: string };
@@ -55,17 +57,29 @@ const List = () => {
         keyExtractor={(item, index) => String(item?.id ?? index)}
         numColumns={2}
         columnWrapperStyle={styles.Row}
-        renderItem={({ item }) => {
-          console.log('Rendering item:', item.id);  // Лог: Для каждого item в списке (если data есть)
-          return <ProductCard item={item} />;
-        }}
+        renderItem={({ item }) => <ProductCard item={item} />}
         contentContainerStyle={{
           flexGrow: 1,
           paddingBottom: isPagination ? 140 : 70,
           minHeight: Dimensions.get('window').height,
         }}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
         ListEmptyComponent={
-          isLoading ? <Txt>Загрузка...</Txt> : <Txt>Нет товаров</Txt>
+          isLoading ? (
+            <View style={{ paddingTop: 20 }}>
+              <LoadingSpinner message="Загружаем товары..." />
+              <View style={styles.SkeletonGrid}>
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+              </View>
+            </View>
+          ) : (
+            <Txt>Нет товаров</Txt>
+          )
         }
       />
 
@@ -73,7 +87,6 @@ const List = () => {
         <View style={styles.Container}>
           <Pagination
             onChange={(value) => {
-              console.log('Pagination change: new value=', value, 'calling getDataFromAtributes with id=', id);  // Лог: При смене страницы
               getDataFromAtributes(id);
             }}
             pages={pages}
@@ -106,5 +119,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: '5%',
+  },
+  SkeletonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 24,
+    marginTop: 20,
+    paddingHorizontal: 16,
   },
 });

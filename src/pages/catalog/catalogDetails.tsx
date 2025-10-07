@@ -116,6 +116,7 @@ const CatalogDetails = () => {
                 onScroll={handleScroll}
                 scrollEventThrottle={16}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.FlatListContent}
             />
         </View>
     )
@@ -128,7 +129,6 @@ const styles = StyleSheet.create({
         paddingTop: StatusBar.currentHeight,
         flex: 1,
         backgroundColor: '#fff',
-        paddingBottom: 150,
     },
     BackBox: {
         paddingTop: 25,
@@ -144,5 +144,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 10,
         zIndex: 1000,
+    },
+    FlatListContent: {
+        paddingBottom: 100,
     },
 })

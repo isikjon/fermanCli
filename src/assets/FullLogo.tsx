@@ -1,11 +1,11 @@
 import { Image, StyleSheet, View } from 'react-native'
 import React from 'react'
-import Txt from '@/ui/Text'
+import Txt from '../ui/Text'
 
 const FullLogo = () => {
     return (
         <View style={styles.Logo}>
-            <Image source={require("@/assets/images/icon.png")} style={styles.LogoImg} />
+            <Image source={require("../assets/images/icon.png")} style={styles.LogoImg} />
             <View style={styles.Text}>
                 <Txt size={48} weight='Jingleberry' lineHeight={50}>ФЕРМА ДВ</Txt>
                 <View style={{ marginTop: -5 }}>

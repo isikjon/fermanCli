@@ -8,9 +8,10 @@ import useCatalogStore from '../../../store/catalog'
 import useCartStore from '../../../store/cart'
 import useNotificationStore from '../../../store/notification'
 import { useNavigation } from '@react-navigation/native'
+import { formatPrice } from '../../../functions'
 
 const Controlls = () => {
-    const { activeProduct } = useCatalogStore()
+    const { activeProduct, setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
     const { addItemToCart, cartList } = useCartStore()
     const { setMessage } = useNotificationStore()
     const navigation = useNavigation()
@@ -33,8 +34,19 @@ const Controlls = () => {
             setInCart(true)
         } else {
             setInCart(false)
-            setAmount(1)
-            setWeightAmount(0.1)
+            if (activeProduct?.id) {
+                const savedAmount = getSelectedAmount(activeProduct.id)
+                if (savedAmount !== undefined) {
+                    if (activeProduct.weighed) {
+                        setWeightAmount(savedAmount)
+                    } else {
+                        setAmount(savedAmount)
+                    }
+                } else {
+                    setAmount(1)
+                    setWeightAmount(0.1)
+                }
+            }
         }
     }, [cartList, activeProduct])
 
@@ -46,7 +58,18 @@ const Controlls = () => {
 
     const maxStock = activeProduct.stock
 
-    const totalPrice = (activeProduct.price * (activeProduct.weighed ? weightAmount : 1)).toFixed()
+    // Логируем остатки товара
+    useEffect(() => {
+        console.log('📦 Product page stock info:', {
+            name: activeProduct.name?.substring(0, 50),
+            id: activeProduct.id,
+            stock: activeProduct.stock,
+            inCart: inCart,
+            currentAmount: activeProduct.weighed ? weightAmount : amount
+        });
+    }, [activeProduct, inCart, amount, weightAmount]);
+
+    const totalPrice = formatPrice(activeProduct.price * (activeProduct.weighed ? weightAmount : 1))
 
     return (
         <View style={styles.Box}>
@@ -72,7 +95,16 @@ const Controlls = () => {
                 {!inCart && (
                     <Counter 
                         amount={activeProduct.weighed ? weightAmount : amount} 
-                        onChange={activeProduct.weighed ? setWeightAmount : setAmount}
+                        onChange={(value) => {
+                            if (activeProduct.weighed) {
+                                setWeightAmount(value)
+                            } else {
+                                setAmount(value)
+                            }
+                            if (activeProduct.id) {
+                                setSelectedAmount(activeProduct.id, value)
+                            }
+                        }}
                         step={activeProduct.weighed ? 0.1 : 1}
                         min={activeProduct.weighed ? 0.1 : 1}
                         sign={activeProduct.weighed ? "кг" : ""}
@@ -91,6 +123,15 @@ const Controlls = () => {
                                 const addingAmount = activeProduct.weighed ? weightAmount : amount
                                 const newTotal = currentInCart + addingAmount
                                 
+                                console.log('🛒 Adding to cart from product page:', {
+                                    name: activeProduct.name?.substring(0, 50),
+                                    stock: maxStock,
+                                    currentInCart: currentInCart,
+                                    adding: addingAmount,
+                                    newTotal: newTotal,
+                                    willBlock: maxStock !== undefined && newTotal > maxStock
+                                });
+                                
                                 if (maxStock !== undefined && newTotal > maxStock) {
                                     setMessage('На складе недостаточно товара', 'error')
                                     return
@@ -106,6 +147,7 @@ const Controlls = () => {
                                     weight: weightAmount,
                                     stock: maxStock
                                 })
+                                clearSelectedAmount(activeProduct.id)
                             } else {
                                 navigation.navigate('cart')
                             }

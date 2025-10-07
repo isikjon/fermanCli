@@ -18,12 +18,12 @@ export const navList: NavItem[] = [
     { link: "cart", name: "корзина", icon: Icons.Cart },
 ];
 export const bannersList = [
-    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("@/assets/images/banners/1.png") },
-    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("@/assets/images/banners/2.png") },
-    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("@/assets/images/banners/3.png") },
-    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("@/assets/images/banners/1.png") },
-    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("@/assets/images/banners/2.png") },
-    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("@/assets/images/banners/3.png") },
+    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("../assets/images/banners/1.png") },
+    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("../assets/images/banners/2.png") },
+    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("../assets/images/banners/3.png") },
+    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("../assets/images/banners/1.png") },
+    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("../assets/images/banners/2.png") },
+    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("../assets/images/banners/3.png") },
 ]
 
 export const categoriesList = [
@@ -67,11 +67,11 @@ export const catalogCatList = [
 ]
 
 export const productList = [
-    { id: "1", name: "Ацидофилин из козьего молока, 500мл", price: 185, image: require("@/assets/images/products/Milk.png") },
+    { id: "1", name: "Ацидофилин из козьего молока, 500мл", price: 185, image: require("../assets/images/products/Milk.png") },
     { id: "2", name: "Варенец из козьего молока, 220гр.", price: 170, image: null },
     { id: "3", name: "Зерненый творого из козьего молока в сливках, 200гр.", price: 310, image: null },
     { id: "4", name: "Йогурт греческий с абрикосом Экоферма Николаевская, 200гр.", price: 310, image: null },
-    { id: "5", name: "Кефир деревенский Карсаковка, 1л.", price: 310, image: require("@/assets/images/products/Kefir.png") },
+    { id: "5", name: "Кефир деревенский Карсаковка, 1л.", price: 310, image: require("../assets/images/products/Kefir.png") },
 ]
 
 export const historyList = [

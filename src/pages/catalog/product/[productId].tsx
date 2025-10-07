@@ -1,24 +1,45 @@
 import { ScrollView, StatusBar, StyleSheet, View } from 'react-native'
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import Sections from '../../../components/Sections'
 import useCatalogStore from '../../../store/catalog'
-import Txt from '../../../ui/Text'
-import { useRoute } from '@react-navigation/native'
+import LoadingSpinner from '../../../ui/LoadingSpinner'
+import { useRoute, useFocusEffect } from '@react-navigation/native'
+import { performanceMonitor } from '../../../utils/performanceMonitor'
 
 const ProductScreen = () => {
     const route = useRoute<any>()
     const { id } = route.params
+    const isMounted = useRef(true)
 
     const { isLoading, getProduct, activeProduct } = useCatalogStore()
 
+    useFocusEffect(
+        useCallback(() => {
+            performanceMonitor.startMonitoring()
+            return () => {
+                performanceMonitor.stopMonitoring()
+            }
+        }, [])
+    )
+
     useEffect(() => {
-        const load = async () => {
-            const startTime = performance.now()
-            console.log('📄 [ProductScreen] MOUNT', id, 'at', performance.now())
-            await getProduct(id)
-            console.log('✅ [ProductScreen] LOADED in', (performance.now() - startTime).toFixed(2), 'ms')
+        isMounted.current = true
+
+        const loadProduct = async () => {
+            if (!isMounted.current) return
+            
+            performanceMonitor.logInteraction('Open Product', 'ProductScreen')
+            await performanceMonitor.measureAsyncOperation(
+                () => getProduct(id),
+                'Product Load'
+            )
         }
-        load()
+
+        loadProduct()
+
+        return () => {
+            isMounted.current = false
+        }
     }, [id])
 
     return (
@@ -33,7 +54,7 @@ const ProductScreen = () => {
                     </>
                 ) : (
                     <View style={styles.Loader}>
-                        <Txt>Загрузка...</Txt>
+                        <LoadingSpinner message="Загружаем информацию о товаре..." />
                     </View>
                 )}
             </ScrollView>

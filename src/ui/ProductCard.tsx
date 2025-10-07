@@ -1,5 +1,5 @@
-import { Image, StyleSheet, TouchableOpacity, View, InteractionManager } from 'react-native'
-import React, { FC, useCallback, useEffect, useState, useRef } from 'react'
+import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import Empty from '../assets/svg/Empty'
 import Txt from './Text'
 import Counter from './Counter'
@@ -9,67 +9,63 @@ import useCatalogStore from '../store/catalog'
 import useCartStore from '../store/cart'
 import useNotificationStore from '../store/notification'
 import { useNavigation } from '@react-navigation/native'
+import { performanceMonitor } from '../utils/performanceMonitor'
+import { formatPrice } from '../functions'
 
 interface Props {
     item: ProductType
+    width?: number
 }
 
-const ProductCard: FC<Props> = ({ item }) => {
+const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
-    const { getImage } = useCatalogStore()
+    const { getImage, setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
     const { addItemToCart, cartList } = useCartStore()
     const { setMessage } = useNotificationStore()
-    const [inCart, setInCart] = useState(false)
     const isMounted = useRef(true)
     const isNavigatingRef = useRef(false)
     const [image, setImage] = useState<string | null>(null)
     
-    const cartItem = cartList.find(i => i.id === item.id)
-    const initialAmount = cartItem 
-        ? (item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount)
-        : (item.weighed ? 0.1 : 1)
-    const [amount, setAmount] = useState(initialAmount)
+    const cartItem = useMemo(() => cartList.find(i => i.id === item.id), [cartList, item.id])
+    
+    const inCart = useMemo(() => !!cartItem, [cartItem])
+    
+    const amount = useMemo(() => {
+        if (cartItem) {
+            return item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
+        }
+        const savedAmount = getSelectedAmount(item.id)
+        if (savedAmount !== undefined) {
+            return savedAmount
+        }
+        return item.weighed ? 0.1 : 1
+    }, [cartItem, item.weighed, item.id])
+    
+    const [localAmount, setLocalAmount] = useState(amount)
+    
+    useEffect(() => {
+        setLocalAmount(amount)
+    }, [amount])
     
     const getImageUrl = useCallback(async () => {
+        if (!item.image) return
         const imageMetadata = await getImage(item.image)
         if (isMounted.current) {
             setImage(imageMetadata || null)
         }
     }, [item.image, getImage])
 
-    const checkInCart = useCallback(() => {
-        const data = cartList.find(i => i.id === item.id)
-        if (data) {
-            const cartAmount = item.weighed && data.weight !== undefined ? data.weight : data.amount
-            setAmount(cartAmount)
-            setInCart(true)
-        } else {
-            setInCart(false)
-            setAmount(item.weighed ? 0.1 : 1)
-        }
-    }, [cartList, item.id, item.weighed])
-
     useEffect(() => {
-        checkInCart()
-        
-        let timer: NodeJS.Timeout
-        const handle = InteractionManager.runAfterInteractions(() => {
-            timer = setTimeout(() => {
-                if (isMounted.current) {
-                    getImageUrl()
-                }
-            }, 200)
-        })
+        isMounted.current = true
+        getImageUrl()
         
         return () => {
             isMounted.current = false
-            handle.cancel()
-            if (timer) clearTimeout(timer)
         }
-    }, [getImageUrl, checkInCart])
+    }, [getImageUrl])
 
-    const step = item.weighed ? 0.1 : 1
-    const totalPrice = (amount * item.price).toFixed(2)
+    const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
+    const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
 
     return (
         <TouchableOpacity
@@ -78,11 +74,19 @@ const ProductCard: FC<Props> = ({ item }) => {
             onPress={() => {
                 if (isNavigatingRef.current) return
                 isNavigatingRef.current = true
-                console.log('🖱️ [ProductCard] CLICKED', item.name.substring(0, 30))
-                navigation.navigate('product', { id: item.id })
+                
+                performanceMonitor.logInteraction('Click Product Card', item.name.substring(0, 30))
+                console.log('📦 ProductCard stock info:', {
+                    name: item.name?.substring(0, 50),
+                    stock: item.stock,
+                    inCart: inCart,
+                    currentAmount: cartItem?.amount || 0
+                });
+                navigation.navigate('product' as never, { id: item.id } as never)
+                
                 setTimeout(() => {
                     isNavigatingRef.current = false
-                }, 1000)
+                }, 500)
             }}
         >
             <View style={styles.Content}>
@@ -95,7 +99,7 @@ const ProductCard: FC<Props> = ({ item }) => {
                 <View style={styles.Info}>
                     <Txt>{item.name}</Txt>
                     <Txt weight='Bold'>
-                        {`${item.price} ₽ / ${item.weighed ? "кг" : "шт"}`}
+                        {`${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`}
                     </Txt>
                     <Txt size={14} color="#666">
                         Итого: {totalPrice} ₽
@@ -105,9 +109,12 @@ const ProductCard: FC<Props> = ({ item }) => {
 
             <View style={styles.Box}>
                 <Counter
-                    amount={amount}
+                    amount={localAmount}
                     step={step}
-                    onChange={setAmount}
+                    onChange={(value) => {
+                        setLocalAmount(value)
+                        setSelectedAmount(item.id, value)
+                    }}
                     sign={item.weighed ? "кг" : ""}
                     max={item.stock}
                     isSmall
@@ -116,11 +123,21 @@ const ProductCard: FC<Props> = ({ item }) => {
                 <Button
                     onClick={() => {
                         if (!inCart) {
+                            performanceMonitor.logInteraction('Add to Cart', item.name.substring(0, 30))
                             const cartData = cartList.find(i => i.id === item.id)
                             const currentInCart = item.weighed 
                                 ? (cartData?.weight || 0)
                                 : (cartData?.amount || 0)
-                            const newTotal = item.weighed ? currentInCart + amount : currentInCart + amount
+                            const newTotal = item.weighed ? currentInCart + localAmount : currentInCart + localAmount
+                            
+                            console.log('🛒 Adding to cart:', {
+                                name: item.name?.substring(0, 50),
+                                stock: item.stock,
+                                currentInCart: currentInCart,
+                                adding: localAmount,
+                                newTotal: newTotal,
+                                willBlock: item.stock !== undefined && newTotal > item.stock
+                            });
                             
                             if (item.stock !== undefined && newTotal > item.stock) {
                                 setMessage('На складе недостаточно товара', 'error')
@@ -128,17 +145,19 @@ const ProductCard: FC<Props> = ({ item }) => {
                             }
                             
                             addItemToCart({
-                                amount: item.weighed ? 1 : amount,
+                                amount: item.weighed ? 1 : localAmount,
                                 id: item.id,
                                 image: item.image,
                                 name: item.name,
                                 price: item.price,
                                 isWeighted: item.weighed,
-                                weight: item.weighed ? amount : undefined,
+                                weight: item.weighed ? localAmount : undefined,
                                 stock: item.stock
                             })
+                            clearSelectedAmount(item.id)
                         } else {
-                            navigation.navigate('cart')
+                            performanceMonitor.logInteraction('Go to Cart', 'ProductCard')
+                            navigation.navigate('cart' as never)
                         }
                     }}
                     background={inCart ? "#EEEEEE" : "#4FBD01"}
@@ -154,7 +173,14 @@ const ProductCard: FC<Props> = ({ item }) => {
 
 ProductCard.displayName = 'ProductCard'
 
-export default ProductCard
+export default React.memo(ProductCard, (prevProps, nextProps) => {
+    return (
+        prevProps.item.id === nextProps.item.id &&
+        prevProps.item.price === nextProps.item.price &&
+        prevProps.item.stock === nextProps.item.stock &&
+        prevProps.width === nextProps.width
+    )
+})
 
 const styles = StyleSheet.create({
     Item: {

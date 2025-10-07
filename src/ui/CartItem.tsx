@@ -9,6 +9,7 @@ import useCatalogStore from '../store/catalog'
 import Empty from '../assets/svg/Empty'
 import useCartStore from '../store/cart'
 import { useNavigation } from '@react-navigation/native'
+import { formatPrice } from '../functions'
 
 interface Props {
     item: CartType
@@ -36,7 +37,7 @@ const CartItem: FC<Props> = ({ item }) => {
             <Row gap={24}>
                 <TouchableOpacity
                     style={{ flex: 1 }}
-                    onPress={() => navigation.navigate('product', { productId: item.id })}
+                    onPress={() => navigation.navigate('product' as never, { id: item.id } as never)}
                     activeOpacity={0.5}
                 >
                     <Row>
@@ -49,7 +50,7 @@ const CartItem: FC<Props> = ({ item }) => {
                         <View style={styles.Title}>
                             <Txt weight='Bold' size={16} lines={3}>{item.name}</Txt>
                             {item.isWeighted && <Txt>{item.weight?.toFixed(1) || 0.1} кг</Txt>}
-                            <Txt>{`${item.amount}x${price.toFixed()}=${(item.amount * price).toFixed()} руб.`}</Txt>
+                            <Txt>{`${item.amount}x${formatPrice(price)}=${formatPrice(item.amount * price)} руб.`}</Txt>
                         </View>
                     </Row>
                 </TouchableOpacity>
@@ -67,7 +68,7 @@ const CartItem: FC<Props> = ({ item }) => {
             </Row>
 
             <Row>
-                <Txt size={28} weight='Bold'>{`${(item.amount * price).toFixed()} руб.`}</Txt>
+                <Txt size={28} weight='Bold'>{`${formatPrice(item.amount * price)} руб.`}</Txt>
                 <TouchableOpacity activeOpacity={0.5} onPress={() => removeItemFromCart(item.id)}>
                     <Icons.Trash />
                 </TouchableOpacity>

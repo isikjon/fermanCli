@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import Txt from '../ui/Text';
 import useCartStore from '../store/cart';
 import useDeliveryStore from '../store/delivery';
-import { getZoneForLocation } from '../functions';
+import { getZoneForLocation, formatPrice } from '../functions';
 import { deliveryDataObj } from '../constants/delivery';
 
 interface Props {
@@ -15,14 +15,6 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
     const { deliveryData, addresses } = useDeliveryStore();
     const currentAmount = calculateAmount();
     const minOrderAmount = 600;
-
-    if (currentRoute === 'checkout' || currentRoute === 'cart' || currentRoute === 'contacts') {
-        return null;
-    }
-
-    if (cartList.length === 0) {
-        return null;
-    }
 
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id);
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng);
@@ -64,28 +56,62 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
     const { threshold249, thresholdFree, currentPrice } = getDeliveryPricing();
 
     const getBannerText = () => {
+        // 1. Проверка минимального заказа (приоритет)
         if (currentAmount < minOrderAmount) {
             const remaining = minOrderAmount - currentAmount;
-            return `Минимальный заказ от ${minOrderAmount} руб. Добавьте товаров на ${remaining.toFixed()} руб.`;
+            return `До минимального заказа добавьте ещё ${formatPrice(remaining)} руб.`;
         }
 
-        if (currentAmount < threshold249 && threshold249 > 0 && deliveryData?.type === 0) {
-            const remaining = threshold249 - currentAmount;
-            return `Чтобы снизить стоимость доставки до 249 руб, добавьте в корзину товаров на ${remaining.toFixed()} руб.`;
+        // 2. Только для доставки (не для самовывоза)
+        if (deliveryData?.type === 0 && activeAddress) {
+            // 2a. Проверка порога 249 руб
+            if (threshold249 > 0 && currentAmount < threshold249) {
+                const remaining = threshold249 - currentAmount;
+                return `Чтобы снизить стоимость доставки до 249 руб., добавьте ещё ${formatPrice(remaining)} руб.`;
+            }
+
+            // 2b. Проверка бесплатной доставки
+            if (thresholdFree > 0 && currentAmount < thresholdFree) {
+                const remaining = thresholdFree - currentAmount;
+                return `До бесплатной доставки добавьте ещё ${formatPrice(remaining)} руб.`;
+            }
+
+            // 2c. Бесплатная доставка достигнута
+            if (currentAmount >= thresholdFree && thresholdFree > 0) {
+                return `🎉 Бесплатная доставка! Заказ: ${formatPrice(currentAmount)} руб.`;
+            }
         }
 
-        if (currentAmount < thresholdFree && thresholdFree > 0 && deliveryData?.type === 0) {
-            const remaining = thresholdFree - currentAmount;
-            return `Чтобы стоимость доставки стала 0 руб, добавьте в корзину товаров на ${remaining.toFixed()} руб.`;
-        }
-
-        return `Заказ: ${currentAmount.toFixed()} руб.`;
+        // 3. Просто показываем сумму заказа
+        return `Заказ: ${formatPrice(currentAmount)} руб.`;
     };
+
+    const bannerText = getBannerText();
+
+    console.log('🎯 MinOrderBanner rendering:', {
+        currentRoute,
+        currentAmount,
+        minOrderAmount,
+        threshold249,
+        thresholdFree,
+        bannerText,
+        hasAddress: !!activeAddress
+    });
+
+    // Показываем баннер только когда есть товары в корзине
+    if (cartList.length === 0) {
+        return null;
+    }
+
+    // Скрываем на экранах где не нужен
+    if (currentRoute === 'checkout' || currentRoute === 'orderSuccess' || currentRoute === 'welcome') {
+        return null;
+    }
 
     return (
         <View style={styles.banner}>
             <Txt size={14} weight="Bold" color="#fff" style={styles.text}>
-                {getBannerText()}
+                {bannerText}
             </Txt>
         </View>
     );

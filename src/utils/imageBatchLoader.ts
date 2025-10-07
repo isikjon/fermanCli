@@ -24,19 +24,19 @@ class ImageBatchLoader {
     }
 
     private async processBatch() {
-        const links = Array.from(this.pendingMetadata.keys())
+        const links = Array.from(this.pendingMetadata.keys()).slice(0, 5)
         const callbacks = new Map(this.pendingMetadata)
-        this.pendingMetadata.clear()
+        links.forEach(link => this.pendingMetadata.delete(link))
         this.batchTimeout = null
 
-        console.log(`🔥 [BatchLoader] Processing batch of ${links.length} images`)
-        const batchStartTime = performance.now()
-
         const results = await Promise.allSettled(
-            links.map(link => api.products.getImage(link, false))
+            links.map(link => {
+                return Promise.race([
+                    api.products.getImage(link, false),
+                    new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
+                ])
+            })
         )
-
-        console.log(`⚡ [BatchLoader] Batch completed in ${(performance.now() - batchStartTime).toFixed(2)}ms`)
 
         results.forEach((result, index) => {
             const link = links[index]
@@ -45,6 +45,10 @@ class ImageBatchLoader {
             
             resolvers.forEach(resolve => resolve(value))
         })
+
+        if (this.pendingMetadata.size > 0) {
+            setTimeout(() => this.processBatch(), 50)
+        }
     }
 }
 

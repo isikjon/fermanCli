@@ -6,6 +6,7 @@ import NavImg from '../assets/svg/NavImg';
 import useCartStore from '../store/cart';
 import useFavoriteStore from '../store/favorite';
 import useDeliveryStore from '../store/delivery';
+import useGlobalStore from '../store';
 import { NavigationContainerRef } from "@react-navigation/native";
 import {RootStackParamList} from "../RootLayout";
 
@@ -25,6 +26,7 @@ const Navigation = () => {
     const { cartList, getCartList } = useCartStore();
     const { favoriteList, getFavoriteList } = useFavoriteStore();
     const { deliveryData } = useDeliveryStore();
+    const { hideNavigation } = useGlobalStore();
     const [currentRoute, setCurrentRoute] = useState<string | undefined>();
 
     useEffect(() => {
@@ -42,30 +44,39 @@ const Navigation = () => {
         return link === currentRoute;
     }
 
+    if (hideNavigation) {
+        return null;
+    }
+
     return (
         <View style={styles.NavBox}>
             {/* Картинка лежит СВЕРХУ навбара без зазора (позиционируем относительно NavBox) */}
             <NavImg pointerEvents="none" style={styles.NavImgAboveBar} />
             <View style={styles.Navigation}>
-                {navList.map((item, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        activeOpacity={0.5}
-                        style={styles.NavItem}
-                        onPress={() => navigate(item.link as any)}
-                    >
-                        <item.icon isBold={isActive(item.link)} color="#4FBD01" width={28} height={28} />
-                        <Txt weight={isActive(item.link) ? "Bold" : "Regular"} size={12}>{item.name}</Txt>
+                {navList.map((item, index) => {
+                    const isActiveRoute = isActive(item.link)
+                    const iconColor = item.name === "избранное" && isActiveRoute ? "#EF2D45" : "#4FBD01"
+                    
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            activeOpacity={0.5}
+                            style={styles.NavItem}
+                            onPress={() => navigate(item.link as any)}
+                        >
+                            <item.icon isBold={isActiveRoute} color={iconColor} width={28} height={28} />
+                            <Txt weight={isActiveRoute ? "Bold" : "Regular"} size={12}>{item.name}</Txt>
 
-                        {item.name === "корзина" && <View style={styles.Indicator}>
-                            <Txt weight='Bold' color='#F73106' size={14}>{cartList.length}</Txt>
-                        </View>}
+                            {item.name === "корзина" && <View style={styles.Indicator}>
+                                <Txt weight='Bold' color='#F73106' size={14}>{cartList.length}</Txt>
+                            </View>}
 
-                        {item.name === "избранное" && <View style={styles.Indicator}>
-                            <Txt weight='Bold' color='#F73106' size={14}>{favoriteList.length}</Txt>
-                        </View>}
-                    </TouchableOpacity>
-                ))}
+                            {item.name === "избранное" && <View style={styles.Indicator}>
+                                <Txt weight='Bold' color='#F73106' size={14}>{favoriteList.length}</Txt>
+                            </View>}
+                        </TouchableOpacity>
+                    )
+                })}
             </View>
         </View>
     );
