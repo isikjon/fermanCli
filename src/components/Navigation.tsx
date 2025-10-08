@@ -2,7 +2,6 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import React, {createRef, useEffect, useState} from 'react';
 import { navList } from '../constants';
 import Txt from '../ui/Text';
-import NavImg from '../assets/svg/NavImg';
 import useCartStore from '../store/cart';
 import useFavoriteStore from '../store/favorite';
 import useDeliveryStore from '../store/delivery';
@@ -50,8 +49,6 @@ const Navigation = () => {
 
     return (
         <View style={styles.NavBox}>
-            {/* Картинка лежит СВЕРХУ навбара без зазора (позиционируем относительно NavBox) */}
-            <NavImg pointerEvents="none" style={styles.NavImgAboveBar} />
             <View style={styles.Navigation}>
                 {navList.map((item, index) => {
                     const isActiveRoute = isActive(item.link)
@@ -105,21 +102,9 @@ const styles = StyleSheet.create({
         gap: 4,
         position: 'relative',
     },
-    NavImgAboveBar: {
-        position: 'absolute',
-        zIndex: 1, // ниже бара, чтобы бар лежал сверху
-        // высота бара 80 — чтобы картинка ЧУТЬ налегала, ставим меньше 80 (регулируй здесь)
-        bottom: 60, // налегание ~6px; больше число — выше, меньше — ниже
-        right: 50,
-    },
     NavBox: {
         position: "relative",
-
     },
-    // Ранее сдвигали картинку вверх для каталога — отключено, чтобы иконка была на самом баре
-    // IsCatalogCart: {
-    //     top: -100
-    // },
     Indicator: {
         position: "absolute",
         top: -5,

@@ -81,13 +81,11 @@ export class SafeRNFS {
                 throw new Error('Invalid download options provided');
             }
             
-            // Проверяем что URL валидный
             if (!this.isValidPath(options.fromUrl)) {
                 console.log('⚠️ [SafeRNFS] Invalid fromUrl provided:', options.fromUrl);
                 throw new Error('Invalid fromUrl provided');
             }
             
-            // Проверяем что toFile валидный
             if (!this.isValidPath(options.toFile)) {
                 console.log('⚠️ [SafeRNFS] Invalid toFile provided:', options.toFile);
                 throw new Error('Invalid toFile provided');
@@ -96,6 +94,32 @@ export class SafeRNFS {
             return await RNFS.downloadFile(options);
         } catch (error) {
             console.log('⚠️ [SafeRNFS] Error downloading file:', options?.fromUrl, error);
+            throw error;
+        }
+    }
+
+    static async moveFile(from: string, to: string): Promise<void> {
+        try {
+            if (!this.isValidPath(from) || !this.isValidPath(to)) {
+                console.log('⚠️ [SafeRNFS] Invalid path for moveFile:', from, to);
+                throw new Error('Invalid paths for moveFile');
+            }
+            await RNFS.moveFile(from, to);
+        } catch (error) {
+            console.log('⚠️ [SafeRNFS] Error moving file:', from, to, error);
+            throw error;
+        }
+    }
+
+    static async copyFile(from: string, to: string): Promise<void> {
+        try {
+            if (!this.isValidPath(from) || !this.isValidPath(to)) {
+                console.log('⚠️ [SafeRNFS] Invalid path for copyFile:', from, to);
+                throw new Error('Invalid paths for copyFile');
+            }
+            await RNFS.copyFile(from, to);
+        } catch (error) {
+            console.log('⚠️ [SafeRNFS] Error copying file:', from, to, error);
             throw error;
         }
     }

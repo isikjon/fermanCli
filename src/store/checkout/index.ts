@@ -81,7 +81,7 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
 
             const items: OrderItemType[] = cartList.map(i => ({
                 amount: Number((i.isWeighted && i.weight) ? (i.amount * i.weight).toFixed(1) : i.amount),
-                price: Number((i.isWeighted && i.weight) ? formatPrice(i.price) : formatPrice(i.price * i.amount)),
+                price: Number(formatPrice(i.price)),
                 productId: i.id
             }))
             const itemsWithDelivery = [...items, {
@@ -124,13 +124,16 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             const response = await api.order.createOrder(payload)
             console.log('✅ [createOrder] API Response:', response?.data)
 
+            const orderNumber = response?.data?.name || 'Неизвестен'
+            console.log('📋 [createOrder] Order number:', orderNumber)
+
             clearCart()
             
             await NotificationService.updateLastOrderDate()
             console.log('📅 Last order date updated')
 
-            console.log('🧭 [createOrder] Navigating to orderSuccess with amount:', totalAmount)
-            navigate('orderSuccess', { orderAmount: totalAmount })
+            console.log('🧭 [createOrder] Navigating to orderSuccess with amount:', totalAmount, 'number:', orderNumber)
+            navigate('orderSuccess', { orderAmount: totalAmount, orderNumber: orderNumber })
 
         } catch (error: any) {
             console.log('❌ [createOrder] ERROR:', error)

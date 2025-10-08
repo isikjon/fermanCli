@@ -11,6 +11,7 @@ interface OrderSuccessProps {
     route?: {
         params?: {
             orderAmount?: number;
+            orderNumber?: string;
         };
     };
 }
@@ -18,9 +19,10 @@ interface OrderSuccessProps {
 const OrderSuccess: React.FC<OrderSuccessProps> = ({ route }) => {
     const navigation = useNavigation();
     const orderAmount = route?.params?.orderAmount || 0;
+    const orderNumber = route?.params?.orderNumber || '';
 
     useEffect(() => {
-        console.log('✅ [OrderSuccess] Opened with amount:', orderAmount);
+        console.log('✅ [OrderSuccess] Opened with amount:', orderAmount, 'number:', orderNumber);
     }, []);
 
     const handleGoHome = () => {
@@ -40,6 +42,12 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ route }) => {
                 <Txt size={32} weight="Bold" color="#fff" style={styles.title}>
                     Заказ успешно оформлен!
                 </Txt>
+
+                {orderNumber && (
+                    <Txt size={20} weight="Bold" color="#fff" style={styles.orderNumber}>
+                        Номер заказа: {orderNumber}
+                    </Txt>
+                )}
 
                 <Txt size={18} color="#fff" style={styles.subtitle}>
                     Ваш заказ будет обработан в ближайшие часы
@@ -98,6 +106,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 24,
         paddingHorizontal: 20,
+    },
+    orderNumber: {
+        textAlign: 'center',
+        marginBottom: 16,
+        paddingHorizontal: 20,
+        opacity: 0.95,
     },
     subtitle: {
         textAlign: 'center',

@@ -1,4 +1,4 @@
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Image, StyleSheet, TouchableOpacity, View, InteractionManager } from 'react-native'
 import React, { FC, useCallback, useEffect, useState, useRef, useMemo } from 'react'
 import Empty from '../assets/svg/Empty'
 import Txt from './Text'
@@ -11,6 +11,7 @@ import useNotificationStore from '../store/notification'
 import { useNavigation } from '@react-navigation/native'
 import { performanceMonitor } from '../utils/performanceMonitor'
 import { formatPrice } from '../functions'
+import { imageDownloadQueue } from '../utils/imageDownloadQueue'
 
 interface Props {
     item: ProductType
@@ -48,46 +49,92 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     }, [amount])
     
     const getImageUrl = useCallback(async () => {
-        if (!item.image) return
-        const imageMetadata = await getImage(item.image)
-        if (isMounted.current) {
-            setImage(imageMetadata || null)
+        if (!item.image || !isMounted.current) return
+        
+        try {
+            const imageMetadata = await getImage(item.image)
+            if (isMounted.current) {
+                setImage(imageMetadata || null)
+            }
+        } catch (error) {
+            console.log('ProductCard image load error:', error)
         }
     }, [item.image, getImage])
 
     useEffect(() => {
         isMounted.current = true
-        getImageUrl()
+        
+        const handle = InteractionManager.runAfterInteractions(() => {
+            if (isMounted.current) {
+                getImageUrl()
+            }
+        });
         
         return () => {
             isMounted.current = false
+            handle.cancel();
+            if (item.image) {
+                imageDownloadQueue.cancel(item.image);
+            }
         }
-    }, [getImageUrl])
+    }, [getImageUrl, item.image])
 
     const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
     const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
+    
+    const handleAmountChange = useCallback((value: number) => {
+        setLocalAmount(value)
+        setSelectedAmount(item.id, value)
+    }, [item.id, setSelectedAmount])
+    
+    const handleAddToCart = useCallback(() => {
+        if (!inCart) {
+            performanceMonitor.logInteraction('Add to Cart', item.name.substring(0, 30))
+            const cartData = cartList.find(i => i.id === item.id)
+            const currentInCart = item.weighed 
+                ? (cartData?.weight || 0)
+                : (cartData?.amount || 0)
+            const newTotal = item.weighed ? currentInCart + localAmount : currentInCart + localAmount
+            
+            if (item.stock !== undefined && newTotal > item.stock) {
+                setMessage('На складе недостаточно товара', 'error')
+                return
+            }
+            
+            addItemToCart({
+                amount: item.weighed ? 1 : localAmount,
+                id: item.id,
+                image: item.image,
+                name: item.name,
+                price: item.price,
+                isWeighted: item.weighed,
+                weight: item.weighed ? localAmount : undefined,
+                stock: item.stock
+            })
+            clearSelectedAmount(item.id)
+        } else {
+            performanceMonitor.logInteraction('Go to Cart', 'ProductCard')
+            navigation.navigate('cart' as never)
+        }
+    }, [inCart, item, localAmount, cartList, setMessage, addItemToCart, clearSelectedAmount, navigation])
+    
+    const handleProductPress = useCallback(() => {
+        if (isNavigatingRef.current) return
+        isNavigatingRef.current = true
+        
+        performanceMonitor.logInteraction('Click Product Card', item.name.substring(0, 30))
+        navigation.navigate('product' as never, { id: item.id } as never)
+        
+        setTimeout(() => {
+            isNavigatingRef.current = false
+        }, 500)
+    }, [item.id, item.name, navigation])
 
     return (
         <TouchableOpacity
             style={styles.Item}
             activeOpacity={0.5}
-            onPress={() => {
-                if (isNavigatingRef.current) return
-                isNavigatingRef.current = true
-                
-                performanceMonitor.logInteraction('Click Product Card', item.name.substring(0, 30))
-                console.log('📦 ProductCard stock info:', {
-                    name: item.name?.substring(0, 50),
-                    stock: item.stock,
-                    inCart: inCart,
-                    currentAmount: cartItem?.amount || 0
-                });
-                navigation.navigate('product' as never, { id: item.id } as never)
-                
-                setTimeout(() => {
-                    isNavigatingRef.current = false
-                }, 500)
-            }}
+            onPress={handleProductPress}
         >
             <View style={styles.Content}>
                 {image ? (
@@ -111,55 +158,14 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                 <Counter
                     amount={localAmount}
                     step={step}
-                    onChange={(value) => {
-                        setLocalAmount(value)
-                        setSelectedAmount(item.id, value)
-                    }}
+                    onChange={handleAmountChange}
                     sign={item.weighed ? "кг" : ""}
                     max={item.stock}
                     isSmall
                 />
 
                 <Button
-                    onClick={() => {
-                        if (!inCart) {
-                            performanceMonitor.logInteraction('Add to Cart', item.name.substring(0, 30))
-                            const cartData = cartList.find(i => i.id === item.id)
-                            const currentInCart = item.weighed 
-                                ? (cartData?.weight || 0)
-                                : (cartData?.amount || 0)
-                            const newTotal = item.weighed ? currentInCart + localAmount : currentInCart + localAmount
-                            
-                            console.log('🛒 Adding to cart:', {
-                                name: item.name?.substring(0, 50),
-                                stock: item.stock,
-                                currentInCart: currentInCart,
-                                adding: localAmount,
-                                newTotal: newTotal,
-                                willBlock: item.stock !== undefined && newTotal > item.stock
-                            });
-                            
-                            if (item.stock !== undefined && newTotal > item.stock) {
-                                setMessage('На складе недостаточно товара', 'error')
-                                return
-                            }
-                            
-                            addItemToCart({
-                                amount: item.weighed ? 1 : localAmount,
-                                id: item.id,
-                                image: item.image,
-                                name: item.name,
-                                price: item.price,
-                                isWeighted: item.weighed,
-                                weight: item.weighed ? localAmount : undefined,
-                                stock: item.stock
-                            })
-                            clearSelectedAmount(item.id)
-                        } else {
-                            performanceMonitor.logInteraction('Go to Cart', 'ProductCard')
-                            navigation.navigate('cart' as never)
-                        }
-                    }}
+                    onClick={handleAddToCart}
                     background={inCart ? "#EEEEEE" : "#4FBD01"}
                 >
                     <Txt color={inCart ? "#4D4D4D" : "#fff"} weight='Bold' size={18}>

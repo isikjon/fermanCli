@@ -406,6 +406,18 @@ export const orderConstants = {
                 type: "customentity",
                 mediaType: "application/json"
             }
+        },
+        orderSource: {
+            meta: {
+                href: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/ORDER_SOURCE_ATTRIBUTE_ID",
+                type: "attributemetadata",
+                mediaType: "application/json"
+            },
+            valueMeta: {
+                type: "customentity",
+                mediaType: "application/json"
+            },
+            mobileAppValue: "MOBILE_APP_VALUE_ID"
         }
     },
     store: {
@@ -429,7 +441,7 @@ export const slotsList = [
                 id: "f3aa8e72-0836-11ef-0a80-0e45004ec647"
             },
             {
-                value: "19:00 - 22:00",
+                value: "18:00 - 22:00",
                 id: "fee68744-0836-11ef-0a80-0f13004ed5f6"
             },
         ]

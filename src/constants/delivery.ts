@@ -1,5 +1,5 @@
 export const deliveryDataObj = {
-    express: 350,
+    express: 399,
     zones: [
         {
             zone: {
@@ -10,7 +10,7 @@ export const deliveryDataObj = {
                 id: "028e05a7-b4fa-11ee-0a80-1198000442be",
                 name: "Заря"
             },
-            express: 350,
+            express: 399,
             slots: [
                 {
                     time: "10:00 - 12:00",
@@ -55,7 +55,7 @@ export const deliveryDataObj = {
                     ]
                 },
                 {
-                    time: "19:00 - 22:00",
+                    time: "18:00 - 22:00",
                     name: "Вечер",
                     order: [
                         {
@@ -81,7 +81,7 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 350,
+            express: 399,
             slots: [
                 {
                     time: "10:00 - 12:00",
@@ -126,7 +126,7 @@ export const deliveryDataObj = {
                     ]
                 },
                 {
-                    time: "19:00 - 22:00",
+                    time: "18:00 - 22:00",
                     name: "Вечер",
                     order: [
                         {
@@ -152,7 +152,7 @@ export const deliveryDataObj = {
                 id: "7c0dc9ce-ce1e-11ea-0a80-09ca000e5e93",
                 name: "Эгершельд"
             },
-            express: 350,
+            express: 399,
             slots: [
                 {
                     time: "10:00 - 12:00",
@@ -197,7 +197,7 @@ export const deliveryDataObj = {
                     ]
                 },
                 {
-                    time: "19:00 - 22:00",
+                    time: "18:00 - 22:00",
                     name: "Вечер",
                     order: [
                         {

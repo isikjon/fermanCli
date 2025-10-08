@@ -10,6 +10,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RootLayout from './src/RootLayout';
 import NotificationService from './src/services/NotificationService';
 import { getApps } from '@react-native-firebase/app';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { ImageCacheManager } from './src/utils/imageCacheManager';
 
 export default function App() {
     console.log('App rendered');
@@ -19,7 +21,6 @@ export default function App() {
             try {
                 console.log('Starting app initialization...');
                 
-                // Initialize Firebase
                 const apps = getApps();
                 if (apps.length === 0) {
                     console.log('Firebase already initialized via google-services.json');
@@ -27,33 +28,35 @@ export default function App() {
                     console.log('Firebase already initialized');
                 }
                 
-                // Initialize NotificationService
                 console.log('Initializing NotificationService...');
                 NotificationService.initialize();
                 
-                // Request notification permissions
                 console.log('Requesting notification permissions...');
                 await NotificationService.requestPermissions();
                 console.log('Permissions requested');
                 
-                // Check and schedule smart notifications
                 setTimeout(() => {
                     console.log('Checking and scheduling notifications...');
                     NotificationService.checkAndScheduleNotifications();
                     NotificationService.updateLastActivityDate();
                 }, 2000);
                 
+                setTimeout(async () => {
+                    console.log('🧹 Starting automatic cache cleanup...');
+                    await ImageCacheManager.autoCleanup();
+                    console.log('✅ Cache cleanup completed');
+                }, 5000);
+                
                 console.log('App initialized successfully');
                 
             } catch (error) {
-                console.error('Initialization error:', error);
-                console.error('Error stack:', error.stack);
+                console.error('❌ Initialization error:', error);
+                console.error('❌ Error stack:', error.stack);
             }
         }
 
         initialize();
 
-        // Cleanup function
         return () => {
             try {
                 NotificationService.cancelAllNotifications();
@@ -63,5 +66,9 @@ export default function App() {
         };
     }, []);
 
-    return <RootLayout />;
+    return (
+        <ErrorBoundary>
+            <RootLayout />
+        </ErrorBoundary>
+    );
 }

@@ -4,6 +4,11 @@ import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { imageBatchLoader } from '../../utils/imageBatchLoader'
+import { imageDownloadQueue } from '../../utils/imageDownloadQueue'
+
+const MAX_IMAGE_CACHE_SIZE = 50;
+const imageCacheAccessOrder: string[] = [];
+let isQueueInitialized = false;
 
 const useCatalogStore = create<CachedState>()(
     persist(
@@ -111,9 +116,19 @@ const useCatalogStore = create<CachedState>()(
             },
 
             getImage: async (link: string, isClear?: boolean) => {
+                if (!isQueueInitialized) {
+                    imageDownloadQueue.setDownloadFunction(api.products.downloadImage);
+                    isQueueInitialized = true;
+                }
+                
                 const { imageCache, imageMetadataCache } = get()
                 
                 if (imageCache[link]) {
+                    const index = imageCacheAccessOrder.indexOf(link);
+                    if (index > -1) {
+                        imageCacheAccessOrder.splice(index, 1);
+                    }
+                    imageCacheAccessOrder.push(link);
                     return imageCache[link]
                 }
                 
@@ -133,12 +148,21 @@ const useCatalogStore = create<CachedState>()(
                     return null
                 }
                 
-                const localImage = await api.products.downloadImage(imageMetadata)
+                const localImage = await imageDownloadQueue.add(imageMetadata, 'normal')
                 
                 if (localImage) {
-                    set((state) => ({
-                        imageCache: { ...state.imageCache, [link]: localImage }
-                    }))
+                    const newCache = { ...get().imageCache, [link]: localImage };
+                    
+                    imageCacheAccessOrder.push(link);
+                    
+                    if (imageCacheAccessOrder.length > MAX_IMAGE_CACHE_SIZE) {
+                        const oldestKey = imageCacheAccessOrder.shift();
+                        if (oldestKey) {
+                            delete newCache[oldestKey];
+                        }
+                    }
+                    
+                    set({ imageCache: newCache })
                 }
                 
                 return localImage
@@ -146,7 +170,7 @@ const useCatalogStore = create<CachedState>()(
 
             preloadImages: async (links: string[]) => {
                 const { imageCache, imageMetadataCache } = get()
-                const linksToLoad = links.filter(link => link && !imageCache[link]).slice(0, 5)
+                const linksToLoad = links.filter(link => link && !imageCache[link]).slice(0, 3)
                 
                 if (linksToLoad.length === 0) return
 
@@ -156,7 +180,7 @@ const useCatalogStore = create<CachedState>()(
                             if (!imageMetadataCache[link]) {
                                 const metadata = await Promise.race([
                                     imageBatchLoader.getImageMetadata(link),
-                                    new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000))
+                                    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
                                 ])
                                 
                                 if (metadata) {
@@ -164,27 +188,33 @@ const useCatalogStore = create<CachedState>()(
                                         imageMetadataCache: { ...state.imageMetadataCache, [link]: metadata }
                                     }))
 
-                                    const localImage = await Promise.race([
-                                        api.products.downloadImage(metadata),
-                                        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
-                                    ])
+                                    const localImage = await imageDownloadQueue.add(metadata, 'low')
 
                                     if (localImage) {
-                                        set((state) => ({
-                                            imageCache: { ...state.imageCache, [link]: localImage }
-                                        }))
+                                        const newCache = { ...get().imageCache, [link]: localImage };
+                                        
+                                        imageCacheAccessOrder.push(link);
+                                        
+                                        if (imageCacheAccessOrder.length > MAX_IMAGE_CACHE_SIZE) {
+                                            const oldestKey = imageCacheAccessOrder.shift();
+                                            if (oldestKey) {
+                                                delete newCache[oldestKey];
+                                            }
+                                        }
+                                        
+                                        set({ imageCache: newCache })
                                     }
                                 }
                             }
                             
-                            await new Promise(resolve => setTimeout(resolve, 100))
+                            await new Promise(resolve => setTimeout(resolve, 200))
                         } catch {}
                     }
                 }
 
                 setTimeout(() => {
                     loadInBackground().catch(() => {})
-                }, 300)
+                }, 500)
             },
 
             // Поиск по текущему значению из стора (оставлено для обратной совместимости)
@@ -218,7 +248,7 @@ const useCatalogStore = create<CachedState>()(
 
             getProduct: async (id: string) => {
                 try {
-                    const { getImage } = get()
+                    const { imageCache, imageMetadataCache } = get()
                     set({ isLoading: true, activeProductImage: null, activeProduct: null })
 
                     const response = await api.products.getProduct(id)
@@ -229,11 +259,45 @@ const useCatalogStore = create<CachedState>()(
                     })
 
                     if (response.image) {
-                        setTimeout(() => {
-                            getImage(response.image, true).then(imageMetadata => {
-                                set({ activeProductImage: imageMetadata || null })
-                            }).catch(() => {})
-                        }, 50)
+                        if (imageCache[response.image]) {
+                            set({ activeProductImage: imageCache[response.image] })
+                        } else {
+                            setTimeout(async () => {
+                                try {
+                                    let imageMetadata = imageMetadataCache[response.image]
+                                    
+                                    if (!imageMetadata) {
+                                        imageMetadata = await api.products.getImage(response.image, true)
+                                        if (imageMetadata) {
+                                            set((state) => ({
+                                                imageMetadataCache: { ...state.imageMetadataCache, [response.image]: imageMetadata }
+                                            }))
+                                        }
+                                    }
+                                    
+                                    if (imageMetadata) {
+                                        const localImage = await imageDownloadQueue.add(imageMetadata, 'high')
+                                        if (localImage) {
+                                            const newCache = { ...get().imageCache, [response.image]: localImage };
+                                            
+                                            imageCacheAccessOrder.push(response.image);
+                                            
+                                            if (imageCacheAccessOrder.length > MAX_IMAGE_CACHE_SIZE) {
+                                                const oldestKey = imageCacheAccessOrder.shift();
+                                                if (oldestKey) {
+                                                    delete newCache[oldestKey];
+                                                }
+                                            }
+                                            
+                                            set({ 
+                                                activeProductImage: localImage,
+                                                imageCache: newCache 
+                                            })
+                                        }
+                                    }
+                                } catch {}
+                            }, 50)
+                        }
                     }
                 } catch (error) {
                     console.log('getProduct error:', error)

@@ -1,4 +1,4 @@
-import RNFS from 'react-native-fs';
+import { SafeRNFS } from './safeRNFS';
 import CryptoJS from 'crypto-js';
 
 export class ImageCacheManager {
@@ -9,13 +9,13 @@ export class ImageCacheManager {
     // Очистка старого кэша
     static async cleanupOldCache(): Promise<void> {
         try {
-            const cacheDir = RNFS.CachesDirectoryPath;
+            const cacheDir = SafeRNFS.CachesDirectoryPath;
             if (!cacheDir || cacheDir.trim() === '') {
                 console.log('⚠️ [CACHE] Empty cache directory path');
                 return;
             }
 
-            const files = await RNFS.readDir(cacheDir);
+            const files = await SafeRNFS.readDir(cacheDir);
             const now = Date.now();
             let totalSize = 0;
             let deletedCount = 0;
@@ -23,7 +23,6 @@ export class ImageCacheManager {
             console.log(`🧹 [CACHE] Starting cache cleanup, found ${files.length} files`);
 
             for (const file of files) {
-                // Проверяем что file и file.path не null
                 if (!file || !file.path || file.path.trim() === '') {
                     console.log('⚠️ [CACHE] Skipping file with null/empty path');
                     continue;
@@ -32,10 +31,9 @@ export class ImageCacheManager {
                 if (file.isFile() && file.name && file.name.endsWith('.jpg')) {
                     totalSize += file.size || 0;
 
-                    // Удаляем старые файлы
                     if (file.mtime && now - file.mtime.getTime() > this.MAX_CACHE_AGE) {
                         try {
-                            await RNFS.unlink(file.path);
+                            await SafeRNFS.unlink(file.path);
                             deletedCount++;
                             console.log(`🗑️ [CACHE] Deleted old file: ${file.name}`);
                         } catch (unlinkError) {
@@ -45,7 +43,6 @@ export class ImageCacheManager {
                 }
             }
 
-            // Если кэш слишком большой, удаляем самые старые файлы
             if (totalSize > this.MAX_CACHE_SIZE) {
                 const sortedFiles = files
                     .filter(file => file && file.path && file.path.trim() !== '' && file.isFile() && file.name && file.name.endsWith('.jpg'))
@@ -53,10 +50,10 @@ export class ImageCacheManager {
 
                 let currentSize = totalSize;
                 for (const file of sortedFiles) {
-                    if (currentSize <= this.MAX_CACHE_SIZE * 0.8) break; // Оставляем 80% от лимита
+                    if (currentSize <= this.MAX_CACHE_SIZE * 0.8) break;
                     
                     try {
-                        await RNFS.unlink(file.path);
+                        await SafeRNFS.unlink(file.path);
                         currentSize -= file.size || 0;
                         deletedCount++;
                         console.log(`🗑️ [CACHE] Deleted large cache file: ${file.name}`);
@@ -66,7 +63,7 @@ export class ImageCacheManager {
                 }
             }
 
-            console.log(`✅ [CACHE] Cleanup completed: deleted ${deletedCount} files, freed ${(totalSize - currentSize) / 1024 / 1024}MB`);
+            console.log(`✅ [CACHE] Cleanup completed: deleted ${deletedCount} files`);
         } catch (error) {
             console.log(`❌ [CACHE] Cleanup failed:`, error);
         }
@@ -75,13 +72,13 @@ export class ImageCacheManager {
     // Получаем статистику кэша
     static async getCacheStats(): Promise<{ fileCount: number; totalSize: number; oldestFile: Date | null }> {
         try {
-            const cacheDir = RNFS.CachesDirectoryPath;
+            const cacheDir = SafeRNFS.CachesDirectoryPath;
             if (!cacheDir || cacheDir.trim() === '') {
                 console.log('⚠️ [CACHE] Empty cache directory path in getCacheStats');
                 return { fileCount: 0, totalSize: 0, oldestFile: null };
             }
 
-            const files = await RNFS.readDir(cacheDir);
+            const files = await SafeRNFS.readDir(cacheDir);
             const imageFiles = files.filter(file => 
                 file && 
                 file.path && 
@@ -138,13 +135,13 @@ export class ImageCacheManager {
     // Полная очистка кэша
     static async clearAllCache(): Promise<void> {
         try {
-            const cacheDir = RNFS.CachesDirectoryPath;
+            const cacheDir = SafeRNFS.CachesDirectoryPath;
             if (!cacheDir || cacheDir.trim() === '') {
                 console.log('⚠️ [CACHE] Empty cache directory path in clearAllCache');
                 return;
             }
 
-            const files = await RNFS.readDir(cacheDir);
+            const files = await SafeRNFS.readDir(cacheDir);
             const imageFiles = files.filter(file => 
                 file && 
                 file.path && 
@@ -156,7 +153,7 @@ export class ImageCacheManager {
             
             for (const file of imageFiles) {
                 try {
-                    await RNFS.unlink(file.path);
+                    await SafeRNFS.unlink(file.path);
                 } catch (unlinkError) {
                     console.log(`⚠️ [CACHE] Failed to delete file ${file.name}:`, unlinkError);
                 }

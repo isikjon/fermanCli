@@ -219,6 +219,19 @@ export function orderPayload(data: IOrder) {
         }
     }
 
+    const orderSourceAttribute = {
+        // Источник заказа - Приложение
+        meta: {
+            ...orderConstants.attributes.orderSource.meta
+        },
+        value: {
+            meta: {
+                ...orderConstants.attributes.orderSource.valueMeta,
+                href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/${orderConstants.attributes.orderSource.mobileAppValue}`,
+            }
+        }
+    }
+
     const attributes = data.delivery.type === 0 ? [
         {
             // Тип заказа доставка
@@ -243,7 +256,8 @@ export function orderPayload(data: IOrder) {
                     href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/d133041a-0836-11ef-0a80-10de004fb76e/${data.delivery.time}`,
                 }
             }
-        }
+        },
+        orderSourceAttribute
     ] : [
         {
             // Тип заказа самовывоз
@@ -268,7 +282,8 @@ export function orderPayload(data: IOrder) {
                     href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/52f5aab7-0836-11ef-0a80-0bcc004eec9d/${data.delivery.time}`,
                 }
             }
-        }
+        },
+        orderSourceAttribute
     ]
 
     const store = {
@@ -292,14 +307,15 @@ export function orderPayload(data: IOrder) {
     }
 }
 
-export function getSlots(type: number): { name: string; array: SlotType[] } {
+export function getSlots(type: number, isPersonalDelivery: boolean = false): { name: string; array: SlotType[] } {
     const selected = slotsList[type];
     
-    // Текущее время по Владивостоку (UTC+10) — через UTC во избежание ошибок TZ
     const now = new Date();
     const vladHours = (now.getUTCHours() + 10 + 24) % 24;
     const vladMinutes = now.getUTCMinutes();
     const currentVladMinutes = vladHours * 60 + vladMinutes;
+
+    const cutoffTime = 16 * 60 + 30;
 
     const todaySlots: SlotType[] = [];
     const tomorrowSlots: SlotType[] = [];
@@ -309,8 +325,15 @@ export function getSlots(type: number): { name: string; array: SlotType[] } {
         const [startHour, startMinute] = start.split(":").map(Number);
         const slotStartMinutes = startHour * 60 + startMinute;
 
-        // Если слот уже прошёл по Владивостоку, считаем его завтрашним
-        if (slotStartMinutes <= currentVladMinutes) {
+        const isEveningSlot = slot.value.includes("18:00");
+        const isAfterCutoff = currentVladMinutes >= cutoffTime;
+        
+        if (isEveningSlot && isAfterCutoff && !isPersonalDelivery) {
+            tomorrowSlots.push({
+                ...slot,
+                value: `Завтра, ${slot.value}`
+            });
+        } else if (slotStartMinutes <= currentVladMinutes) {
             tomorrowSlots.push({
                 ...slot,
                 value: `Завтра, ${slot.value}`
@@ -323,7 +346,6 @@ export function getSlots(type: number): { name: string; array: SlotType[] } {
         }
     });
 
-    // Сначала слоты на сегодня, потом на завтра
     return {
         name: selected.name,
         array: [...todaySlots, ...tomorrowSlots]

@@ -59,37 +59,44 @@ export function CategoryDTO(data: ICategory[]) {
 }
 
 export function ProductDTO(data: any) {
-    const formattedArray: ProductType[] = data.map((product: any) => {
-        const stock = product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined;
-        
-        // Логируем обработку остатков для отладки
-        if (product?.id) {
-            console.log('🔄 ProductDTO processing:', {
-                id: product.id,
-                name: product.name?.substring(0, 40),
-                rawStock: product?.stock,
-                rawQuantity: product?.quantity,
-                rawStockStore: product?.stockStore,
-                finalStock: stock
-            });
-        }
-        
-        return {
-            image: product?.images?.meta.href,
-            price: product?.salePrices[0].value / 100,
-            name: product?.name,
-            id: product?.id,
-            description: product.description,
-            pathName: product.pathName,
-            country: product?.country?.meta.href,
-            volume: product?.volume,
-            weight: product?.weight,
-            weighed: product?.weighed || false,
-            stock: stock
-        };
-    })
+    if (!data || !Array.isArray(data)) {
+        console.log('⚠️ ProductDTO: Invalid data provided');
+        return [];
+    }
 
-    return formattedArray
+    const formattedArray: ProductType[] = data
+        .filter(product => product && product.id)
+        .map((product: any): ProductType | null => {
+            try {
+                const stock = product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined;
+                
+                const price = product?.salePrices?.[0]?.value 
+                    ? product.salePrices[0].value / 100 
+                    : 0;
+                
+                const imageHref = product?.images?.meta?.href || '';
+                
+                return {
+                    image: imageHref,
+                    price: price,
+                    name: product?.name || 'Без названия',
+                    id: product.id,
+                    description: product?.description || '',
+                    pathName: product?.pathName || '',
+                    country: product?.country?.meta?.href || '',
+                    volume: product?.volume || 0,
+                    weight: product?.weight || 0,
+                    weighed: product?.weighed || false,
+                    stock: stock
+                } as ProductType;
+            } catch (error) {
+                console.log('⚠️ ProductDTO: Error processing product:', product?.id, error);
+                return null;
+            }
+        })
+        .filter((item: ProductType | null): item is ProductType => item !== null);
+
+    return formattedArray;
 }
 
 export function postitionsDTO(items: OrderItemType[]) {

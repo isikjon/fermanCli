@@ -48,8 +48,8 @@ const List = () => {
 
   const getItemLayout = useCallback(
     (_, index: number) => ({
-      length: 200 + 24,
-      offset: (200 + 24) * Math.floor(index / NUM_COLUMNS),
+      length: 380 + 24,
+      offset: (380 + 24) * Math.floor(index / NUM_COLUMNS),
       index,
     }),
     []

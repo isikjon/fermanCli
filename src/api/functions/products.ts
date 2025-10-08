@@ -4,7 +4,7 @@ import axios from "axios"
 import { getZoneForLocation } from "../../functions";
 import useDeliveryStore from "../../store/delivery";
 import { deliveryDataObj } from "../../constants/delivery";
-import RNFS from 'react-native-fs';
+import { SafeRNFS } from '../../utils/safeRNFS';
 import CryptoJS from 'crypto-js';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 
@@ -100,42 +100,74 @@ export async function getImage(link: string, isClear?: boolean) {
     }
 }
 
+const activeDownloads = new Map<string, Promise<string | null>>();
+
 export async function downloadImage(link: string) {
     try {
         if (!link || link.trim() === '') {
             return null;
         }
 
+        if (activeDownloads.has(link)) {
+            return await activeDownloads.get(link);
+        }
+
+        const downloadPromise = performDownload(link);
+        activeDownloads.set(link, downloadPromise);
+
+        try {
+            const result = await downloadPromise;
+            return result;
+        } finally {
+            activeDownloads.delete(link);
+        }
+    } catch (error) {
+        console.log('downloadImage error:', error);
+        return null;
+    }
+}
+
+async function performDownload(link: string): Promise<string | null> {
+    let tempUri: string | null = null;
+    
+    try {
         const hash = CryptoJS.SHA256(link).toString();
-        const compressedUri = `${RNFS.CachesDirectoryPath}/${hash}_compressed.jpg`;
+        const cacheDir = SafeRNFS.CachesDirectoryPath;
+        
+        if (!cacheDir || cacheDir.trim() === '') {
+            console.log('⚠️ Cache directory not available');
+            return null;
+        }
+
+        const compressedUri = `${cacheDir}/${hash}_compressed.jpg`;
         const fileUri = `file://${compressedUri}`;
 
-        const fileInfo = await RNFS.exists(compressedUri);
-        if (fileInfo) {
+        const fileExists = await SafeRNFS.exists(compressedUri);
+        if (fileExists) {
             return fileUri;
         }
 
-        const tempUri = `${RNFS.CachesDirectoryPath}/${hash}_temp.jpg`;
+        tempUri = `${cacheDir}/${hash}_temp.jpg`;
         
         const downloadResult = await Promise.race([
-            RNFS.downloadFile({
+            SafeRNFS.downloadFile({
                 fromUrl: link,
                 toFile: tempUri,
                 headers: AUTH,
                 readTimeout: 10000,
                 connectionTimeout: 10000,
             }).promise,
-            new Promise((_, reject) => 
+            new Promise<any>((_, reject) => 
                 setTimeout(() => reject(new Error('Download timeout')), 10000)
             )
         ]);
 
-        if (!downloadResult || downloadResult.statusCode !== 200) {
+        if (!downloadResult || !downloadResult.statusCode || downloadResult.statusCode !== 200) {
             throw new Error('Download failed');
         }
 
-        const fileExists = await RNFS.exists(tempUri);
-        if (!fileExists) {
+        const tempFileExists = await SafeRNFS.exists(tempUri);
+        if (!tempFileExists) {
             throw new Error('Downloaded file not found');
         }
 
@@ -151,12 +183,28 @@ export async function downloadImage(link: string) {
             { mode: 'contain', onlyScaleDown: true }
         );
 
-        await RNFS.moveFile(resizedImage.uri.replace('file://', ''), compressedUri);
-        await RNFS.unlink(tempUri).catch(() => {});
+        if (!resizedImage || !resizedImage.uri) {
+            throw new Error('Image resize failed');
+        }
+
+        const resizedPath = resizedImage.uri.replace('file://', '');
+        
+        try {
+            await SafeRNFS.moveFile(resizedPath, compressedUri);
+        } catch (moveError) {
+            console.log('⚠️ Move failed, trying copy:', moveError);
+            await SafeRNFS.copyFile(resizedPath, compressedUri);
+            await SafeRNFS.unlink(resizedPath);
+        }
 
         return fileUri;
     } catch (error) {
+        console.log('performDownload error:', error);
         return null;
+    } finally {
+        if (tempUri) {
+            await SafeRNFS.unlink(tempUri);
+        }
     }
 }
 

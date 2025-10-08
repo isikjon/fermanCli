@@ -33,7 +33,7 @@ const Form = () => {
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
     const deliveryPrice = deliveryData?.type === 0 ? zoneName ? calculateDeliveryPrice(calculateAmount(), zoneName.description, express) : 0 : 0
-    const slotList = deliveryData?.type !== undefined ? getSlots(deliveryData?.type).array : []
+    const slotList = deliveryData?.type !== undefined ? getSlots(deliveryData?.type, express).array : []
     
     const minOrderAmount = 600
     const currentAmount = calculateAmount()
@@ -55,13 +55,13 @@ const Form = () => {
 
     return (
         <View style={styles.Form}>
-            {/* Экспресс-доставка */}
+            {/* Персональная доставка */}
             {deliveryData?.type === 0 && ["Эгершельд", "Заря", "Чкалова"].includes(zoneName ? zoneName?.description : "")
                 && <>
                     <Row>
                         <View style={styles.Group}>
-                            <Txt size={20} weight='Bold'>Экспресс-доставка</Txt>
-                            <Txt>Сегодня в течение 2х часов</Txt>
+                            <Txt size={20} weight='Bold'>Персональная доставка</Txt>
+                            <Txt>по согласованию с менеджером в удобное для вас вечернее время</Txt>
                         </View>
                         <Toggle checked={express} onChange={value => setExpress(value)} />
                     </Row>

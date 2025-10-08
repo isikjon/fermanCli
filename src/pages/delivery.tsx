@@ -45,8 +45,8 @@ const Delivery = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // если нужен отступ под header
         >
-            <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
-                <View>
+            <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 20, minHeight: Dimensions.get('window').height * 1.1 }} keyboardShouldPersistTaps="handled">
+                <View style={{ minHeight: Dimensions.get('window').height * 1.1 }}>
                     <FullLogo />
                     {!isDeliveryRequired && (
                         <View style={styles.BackBox}>
@@ -77,7 +77,6 @@ const Delivery = () => {
                             </Txt>
                         </ContinueButton>
                     </View>
-                    <View style={styles.DebugSpacerBottom} />
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -109,9 +108,5 @@ const styles = StyleSheet.create({
     },
     InfoText: {
         opacity: 0.7,
-    },
-    DebugSpacerBottom: {
-        height: Dimensions.get('window').height * 0.15,
-        backgroundColor: 'transparent',
     },
 });
