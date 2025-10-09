@@ -47,13 +47,13 @@ export interface CachedState {
     productsCache: Record<string, any>
     searchCache: Record<string, any>
     imageMetadataCache: Record<string, string>
-    imageCache: Record<string, string>
     productsCountCache: Record<string, number>
 
     changeSearch: (value: string) => void
     changePage: (page: number) => void
     changeIsPagination: (value: boolean, size: number) => void
     changeCategory: (value: string) => void
+    clearProductsCache: () => void
     setSelectedAmount: (productId: string, amount: number) => void
     getSelectedAmount: (productId: string) => number | undefined
     clearSelectedAmount: (productId: string) => void

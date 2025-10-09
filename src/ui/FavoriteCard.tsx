@@ -1,5 +1,6 @@
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import React, { FC, useCallback, useEffect, useState } from 'react'
+import FastImage from 'react-native-fast-image'
 import useCatalogStore from '../store/catalog'
 import Empty from '../assets/svg/Empty'
 import Txt from './Text'
@@ -10,6 +11,7 @@ import { IFavorite } from '../types'
 import useFavoriteStore from '../store/favorite'
 import { useNavigation } from '@react-navigation/native'
 import { formatPrice } from '../functions'
+import { MOYSKLAD_TOKEN } from '../api/functions/products'
 
 interface Props {
     item: IFavorite
@@ -46,7 +48,15 @@ const FavoriteCard: FC<Props> = ({ item }) => {
             >
                 <Row gap={24}>
                     {image ? (
-                        <Image style={styles.Image} source={{ uri: image }} />
+                        <FastImage 
+                            style={styles.Image} 
+                            source={{ 
+                                uri: image,
+                                headers: { Authorization: MOYSKLAD_TOKEN },
+                                priority: FastImage.priority.normal,
+                            }}
+                            resizeMode={FastImage.resizeMode.cover}
+                        />
                     ) : (
                         <View style={styles.Empty}><Empty width={40} height={40} /></View>
                     )}

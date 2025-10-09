@@ -3,12 +3,9 @@ import { CachedState, State } from './types'
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { imageBatchLoader } from '../../utils/imageBatchLoader'
-import { imageDownloadQueue } from '../../utils/imageDownloadQueue'
+// Упрощенная загрузка изображений
 
-const MAX_IMAGE_CACHE_SIZE = 50;
-const imageCacheAccessOrder: string[] = [];
-let isQueueInitialized = false;
+// Упрощенная загрузка изображений - только метаданные
 
 const useCatalogStore = create<CachedState>()(
     persist(
@@ -32,14 +29,21 @@ const useCatalogStore = create<CachedState>()(
             productsCache: {},
             searchCache: {},
             imageMetadataCache: {},
-            imageCache: {},
             productsCountCache: {},
 
             changeSearch: (value) => set({ search: value }),
             changePage: (page: number) => set({ activePage: page }),
             changeIsPagination: (value: boolean, size: number) => set({ isPagination: value, pages: Math.ceil(size / 20) }),
             setCategory: (categoryId: string) => set({ category: categoryId }),
-            changeCategory: (value: string) => set({ category: value }),
+            changeCategory: (value: string) => {
+                console.log('🔄 [Store changeCategory] New category:', value)
+                set({ category: value, activePage: 1 })
+            },
+            
+            clearProductsCache: () => {
+                console.log('🗑️ [Store] Clearing products cache')
+                set({ productsCache: {}, productsCountCache: {} })
+            },
             
             setSelectedAmount: (productId: string, amount: number) => {
                 set((state) => ({
@@ -73,7 +77,10 @@ const useCatalogStore = create<CachedState>()(
                 const { category, productsCountCache } = get()
                 const key = category || catalogId
 
+                console.log('📊 [Store getProductsCount] catalogId:', catalogId, 'category:', category, 'key:', key)
+
                 if (productsCountCache[key] !== undefined) {
+                    console.log('✅ [Store getProductsCount] Using cached count:', productsCountCache[key])
                     return productsCountCache[key]
                 }
 
@@ -89,132 +96,93 @@ const useCatalogStore = create<CachedState>()(
             getProducts: async (catalogId) => {
                 const { activePage, category, productsCache, preloadImages } = get()
                 const key = `${category || catalogId}_${activePage}`
+                
+                console.log('📦 [Store getProducts] catalogId:', catalogId, 'category:', category, 'activePage:', activePage, 'key:', key)
+                
                 set({ isLoading: true })
 
-                if (productsCache[key]) {
+                if (productsCache[key] && productsCache[key].length > 0) {
+                    console.log('✅ [Store getProducts] Using cached products:', productsCache[key].length)
                     set({ productList: productsCache[key], isLoading: false })
                     return
                 }
 
+                if (productsCache[key] && productsCache[key].length === 0) {
+                    console.log('⚠️ [Store getProducts] Found empty cache, will reload from API')
+                }
+
                 try {
-                    const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId)
+                const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId)
                     
-                    set((state) => ({
-                        productList: response,
-                        productsCache: { ...state.productsCache, [key]: response },
-                        isLoading: false,
-                    }))
+                console.log('📦 [Store getProducts] API returned:', response.length, 'products')
+                
+                set((state) => ({
+                    productList: response,
+                    productsCache: response.length > 0 ? { ...state.productsCache, [key]: response } : state.productsCache,
+                    isLoading: false,
+                }))
 
                     const imageLinks = response.map(p => p.image).filter(Boolean)
                     setTimeout(() => {
                         preloadImages(imageLinks)
                     }, 100)
                 } catch (error) {
-                    console.log('getProducts error:', error)
+                    console.log('❌ [Store getProducts] error:', error)
                     set({ isLoading: false })
                 }
             },
 
             getImage: async (link: string, isClear?: boolean) => {
-                if (!isQueueInitialized) {
-                    imageDownloadQueue.setDownloadFunction(api.products.downloadImage);
-                    isQueueInitialized = true;
-                }
+                console.log('🖼️ [Store] getImage called for:', link)
                 
-                const { imageCache, imageMetadataCache } = get()
+                const { imageMetadataCache } = get()
                 
-                if (imageCache[link]) {
-                    const index = imageCacheAccessOrder.indexOf(link);
-                    if (index > -1) {
-                        imageCacheAccessOrder.splice(index, 1);
-                    }
-                    imageCacheAccessOrder.push(link);
-                    return imageCache[link]
-                }
-                
+                // Проверяем кеш метаданных
                 let imageMetadata = imageMetadataCache[link]
                 
                 if (!imageMetadata) {
+                    console.log('📡 [Store] Fetching image metadata for:', link)
                     imageMetadata = await api.products.getImage(link, isClear)
                     
                     if (imageMetadata) {
+                        console.log('✅ [Store] Image metadata received, caching:', link)
                         set((state) => ({
                             imageMetadataCache: { ...state.imageMetadataCache, [link]: imageMetadata }
                         }))
+                    } else {
+                        console.log('❌ [Store] No image metadata received for:', link)
                     }
+                } else {
+                    console.log('✅ [Store] Image metadata found in cache:', link)
                 }
                 
-                if (!imageMetadata) {
-                    return null
-                }
-                
-                const localImage = await imageDownloadQueue.add(imageMetadata, 'normal')
-                
-                if (localImage) {
-                    const newCache = { ...get().imageCache, [link]: localImage };
-                    
-                    imageCacheAccessOrder.push(link);
-                    
-                    if (imageCacheAccessOrder.length > MAX_IMAGE_CACHE_SIZE) {
-                        const oldestKey = imageCacheAccessOrder.shift();
-                        if (oldestKey) {
-                            delete newCache[oldestKey];
-                        }
-                    }
-                    
-                    set({ imageCache: newCache })
-                }
-                
-                return localImage
+                // Возвращаем прямую ссылку на изображение для React Native Image
+                return imageMetadata
             },
 
             preloadImages: async (links: string[]) => {
-                const { imageCache, imageMetadataCache } = get()
-                const linksToLoad = links.filter(link => link && !imageCache[link]).slice(0, 3)
+                // Упрощенная предзагрузка - только метаданные
+                const { imageMetadataCache } = get()
+                const linksToLoad = links.filter(link => link && !imageMetadataCache[link]).slice(0, 6)
                 
                 if (linksToLoad.length === 0) return
-
-                const loadInBackground = async () => {
-                    for (const link of linksToLoad) {
-                        try {
-                            if (!imageMetadataCache[link]) {
-                                const metadata = await Promise.race([
-                                    imageBatchLoader.getImageMetadata(link),
-                                    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
-                                ])
-                                
-                                if (metadata) {
-                                    set((state) => ({
-                                        imageMetadataCache: { ...state.imageMetadataCache, [link]: metadata }
-                                    }))
-
-                                    const localImage = await imageDownloadQueue.add(metadata, 'low')
-
-                                    if (localImage) {
-                                        const newCache = { ...get().imageCache, [link]: localImage };
-                                        
-                                        imageCacheAccessOrder.push(link);
-                                        
-                                        if (imageCacheAccessOrder.length > MAX_IMAGE_CACHE_SIZE) {
-                                            const oldestKey = imageCacheAccessOrder.shift();
-                                            if (oldestKey) {
-                                                delete newCache[oldestKey];
-                                            }
-                                        }
-                                        
-                                        set({ imageCache: newCache })
-                                    }
-                                }
-                            }
-                            
-                            await new Promise(resolve => setTimeout(resolve, 200))
-                        } catch {}
+                
+                console.log('🖼️ [preloadImages] Preloading image metadata:', linksToLoad.length)
+                
+                const metadataPromises = linksToLoad.map(async (link) => {
+                    try {
+                        const imageMetadata = await api.products.getImage(link)
+                        if (imageMetadata) {
+                            set((state) => ({
+                                imageMetadataCache: { ...state.imageMetadataCache, [link]: imageMetadata }
+                            }))
+                        }
+                    } catch (error) {
+                        console.log('Preload metadata error:', error)
                     }
-                }
-
-                setTimeout(() => {
-                    loadInBackground().catch(() => {})
-                }, 500)
+                })
+                
+                await Promise.all(metadataPromises)
             },
 
             // Поиск по текущему значению из стора (оставлено для обратной совместимости)
@@ -328,7 +296,6 @@ const useCatalogStore = create<CachedState>()(
                 productsCache: state.productsCache,
                 searchCache: state.searchCache,
                 imageMetadataCache: state.imageMetadataCache,
-                imageCache: state.imageCache,
                 productsCountCache: state.productsCountCache,
             })
         }

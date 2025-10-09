@@ -1,5 +1,6 @@
-import { Dimensions, Image, StyleSheet, View } from 'react-native'
+import { Dimensions, StyleSheet, View } from 'react-native'
 import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
+import FastImage from 'react-native-fast-image'
 import RoundButton from '../../../ui/RoundButton'
 import Icons from '../../../ui/Icons'
 import Empty from '../../../assets/svg/Empty'
@@ -7,6 +8,7 @@ import useCatalogStore from '../../../store/catalog'
 import useFavoriteStore from '../../../store/favorite'
 import { IFavorite } from '../../../types'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
+import { MOYSKLAD_TOKEN } from '../../../api/functions/products'
 
 const Preview = () => {
     const { activeProduct, activeProductImage, getImage } = useCatalogStore()
@@ -75,12 +77,15 @@ const Preview = () => {
 
     return (
         <View style={styles.Preview}>
-{activeProduct ? (
-    <Image
+{activeProduct && image ? (
+    <FastImage
         style={styles.Image}
         source={{
-            uri: image ?? activeProduct.image // показываем либо кэшированную, либо оригинал
+            uri: image,
+            headers: { Authorization: MOYSKLAD_TOKEN },
+            priority: FastImage.priority.high,
         }}
+        resizeMode={FastImage.resizeMode.cover}
     />
 ) : (
     <View style={styles.Empty}>

@@ -65,6 +65,8 @@ const List = () => {
   )
 
   useEffect(() => {
+    console.log('🔄 [List useEffect] Triggered:', { id, category, activePage })
+    
     isMounted.current = true
     const requestKey = `products_${id}_${category}_${activePage}`
     const controller = requestManager.createCancellableRequest(requestKey)
@@ -74,6 +76,8 @@ const List = () => {
       InteractionManager.runAfterInteractions(async () => {
         try {
           if (!isMounted.current || controller.signal.aborted) return
+          
+          console.log('📥 [List] Starting load products:', { mainCategoryId: id, subCategoryId: category })
           
           performanceMonitor.logInteraction('Load Products', 'List')
           
@@ -95,9 +99,11 @@ const List = () => {
               controller.signal.addEventListener('abort', () => reject(new Error('Aborted')))
             })
           ])
+          
+          console.log('✅ [List] Products loaded successfully')
         } catch (error: any) {
           if (error?.message !== 'Aborted' && isMounted.current) {
-            console.log('Load products error:', error)
+            console.log('❌ [List] Load products error:', error)
           }
         }
       })
@@ -123,7 +129,7 @@ const List = () => {
 
       {!isLoading ? (
         <>
-          {productList.length > 0 || productsCount > 0 ? (
+          {productList.length > 0 ? (
             <>
               <TouchableWithoutFeedback>
                 <FlatList
@@ -163,6 +169,9 @@ const List = () => {
               </Txt>
               <Txt size={14} color="#666" style={{ marginTop: 8, textAlign: 'center' }}>
                 Попробуйте выбрать другую категорию или вернитесь позже
+              </Txt>
+              <Txt size={12} color="#999" style={{ marginTop: 16 }}>
+                Debug: productList.length={productList.length}, productsCount={productsCount}
               </Txt>
             </View>
           )}

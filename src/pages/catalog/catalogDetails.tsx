@@ -4,6 +4,7 @@ import Header from '../../components/Header'
 import Sections from '../../components/Sections'
 import Back from '../../ui/Back'
 import useGlobalStore from '../../store'
+import useCatalogStore from '../../store/catalog'
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
 
 // типизация параметров навигации
@@ -21,12 +22,20 @@ const CatalogDetails = () => {
     const categoriesRef = useRef<View | null>(null)
     const fadeAnim = useRef(new Animated.Value(0)).current
     const { enableScroll } = useGlobalStore()
+    const { changeCategory, changePage, clearProductsCache } = useCatalogStore()
 
     const route = useRoute<RouteProp<RootStackParamList, 'catalogDetails'>>()
     const { id } = route.params
-    console.log('catalogDetails id:', id)
+    console.log('📂 [catalogDetails] Opening category:', id)
 
     const navigation = useNavigation()
+
+    useEffect(() => {
+        console.log('🔄 [catalogDetails] Resetting filters and clearing cache for new category:', id)
+        changeCategory('')
+        changePage(1)
+        clearProductsCache()
+    }, [id, changeCategory, changePage, clearProductsCache])
 
     const handleScroll = useCallback(() => {
         categoriesRef.current?.measure((_fx, _fy, _w, height, _px, py) => {

@@ -60,23 +60,32 @@ export function CategoryDTO(data: ICategory[]) {
 
 export function ProductDTO(data: any) {
     if (!data || !Array.isArray(data)) {
-        console.log('⚠️ ProductDTO: Invalid data provided');
+        console.log('⚠️ [ProductDTO] Invalid data provided:', typeof data);
         return [];
     }
 
+    console.log('📦 [ProductDTO] Processing', data.length, 'products');
+
     const formattedArray: ProductType[] = data
-        .filter(product => product && product.id)
+        .filter(product => {
+            if (!product || !product.id) {
+                console.log('⚠️ [ProductDTO] Skipping product without id');
+                return false;
+            }
+            return true;
+        })
         .map((product: any): ProductType | null => {
             try {
                 const stock = product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined;
                 
-                const price = product?.salePrices?.[0]?.value 
-                    ? product.salePrices[0].value / 100 
-                    : 0;
+                let price = 0;
+                if (product?.salePrices && Array.isArray(product.salePrices) && product.salePrices.length > 0) {
+                    price = product.salePrices[0]?.value ? product.salePrices[0].value / 100 : 0;
+                }
                 
                 const imageHref = product?.images?.meta?.href || '';
                 
-                return {
+                const formattedProduct = {
                     image: imageHref,
                     price: price,
                     name: product?.name || 'Без названия',
@@ -89,12 +98,20 @@ export function ProductDTO(data: any) {
                     weighed: product?.weighed || false,
                     stock: stock
                 } as ProductType;
+
+                if (price === 0) {
+                    console.log('⚠️ [ProductDTO] Product with zero price:', product.name, 'id:', product.id);
+                }
+
+                return formattedProduct;
             } catch (error) {
-                console.log('⚠️ ProductDTO: Error processing product:', product?.id, error);
+                console.log('❌ [ProductDTO] Error processing product:', product?.name, 'id:', product?.id, 'error:', error);
                 return null;
             }
         })
         .filter((item: ProductType | null): item is ProductType => item !== null);
+
+    console.log('✅ [ProductDTO] Successfully processed', formattedArray.length, 'products');
 
     return formattedArray;
 }

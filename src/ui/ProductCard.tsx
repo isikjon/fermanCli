@@ -1,5 +1,6 @@
-import { Image, StyleSheet, TouchableOpacity, View, InteractionManager } from 'react-native'
-import React, { FC, useCallback, useEffect, useState, useRef, useMemo } from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useState, useMemo } from 'react'
+import FastImage from 'react-native-fast-image'
 import Empty from '../assets/svg/Empty'
 import Txt from './Text'
 import Counter from './Counter'
@@ -11,7 +12,7 @@ import useNotificationStore from '../store/notification'
 import { useNavigation } from '@react-navigation/native'
 import { performanceMonitor } from '../utils/performanceMonitor'
 import { formatPrice } from '../functions'
-import { imageDownloadQueue } from '../utils/imageDownloadQueue'
+import { MOYSKLAD_TOKEN } from '../api/functions/products'
 
 interface Props {
     item: ProductType
@@ -23,8 +24,6 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const { getImage, setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
     const { addItemToCart, cartList } = useCartStore()
     const { setMessage } = useNotificationStore()
-    const isMounted = useRef(true)
-    const isNavigatingRef = useRef(false)
     const [image, setImage] = useState<string | null>(null)
     
     const cartItem = useMemo(() => cartList.find(i => i.id === item.id), [cartList, item.id])
@@ -49,35 +48,14 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     }, [amount])
     
     const getImageUrl = useCallback(async () => {
-        if (!item.image || !isMounted.current) return
-        
-        try {
-            const imageMetadata = await getImage(item.image)
-            if (isMounted.current) {
-                setImage(imageMetadata || null)
-            }
-        } catch (error) {
-            console.log('ProductCard image load error:', error)
-        }
+        if (!item.image) return
+        const imageMetadata = await getImage(item.image)
+        setImage(imageMetadata || null)
     }, [item.image, getImage])
 
     useEffect(() => {
-        isMounted.current = true
-        
-        const handle = InteractionManager.runAfterInteractions(() => {
-            if (isMounted.current) {
-                getImageUrl()
-            }
-        });
-        
-        return () => {
-            isMounted.current = false
-            handle.cancel();
-            if (item.image) {
-                imageDownloadQueue.cancel(item.image);
-            }
-        }
-    }, [getImageUrl, item.image])
+        getImageUrl()
+    }, [getImageUrl])
 
     const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
     const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
@@ -119,15 +97,8 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     }, [inCart, item, localAmount, cartList, setMessage, addItemToCart, clearSelectedAmount, navigation])
     
     const handleProductPress = useCallback(() => {
-        if (isNavigatingRef.current) return
-        isNavigatingRef.current = true
-        
         performanceMonitor.logInteraction('Click Product Card', item.name.substring(0, 30))
         navigation.navigate('product' as never, { id: item.id } as never)
-        
-        setTimeout(() => {
-            isNavigatingRef.current = false
-        }, 500)
     }, [item.id, item.name, navigation])
 
     return (
@@ -138,7 +109,15 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         >
             <View style={styles.Content}>
                 {image ? (
-                    <Image style={styles.Image} source={{ uri: image }} />
+                    <FastImage 
+                        style={styles.Image} 
+                        source={{ 
+                            uri: image,
+                            headers: { Authorization: MOYSKLAD_TOKEN },
+                            priority: FastImage.priority.normal,
+                        }}
+                        resizeMode={FastImage.resizeMode.cover}
+                    />
                 ) : (
                     <View style={styles.Empty}><Empty /></View>
                 )}

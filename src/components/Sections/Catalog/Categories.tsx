@@ -21,6 +21,13 @@ const Categories = () => {
         filteredCategory?.array.some(filtered => filtered === sub.name)
     )
 
+    console.log('🏷️ [Categories] Rendered:', {
+        mainCategoryId: id,
+        mainCategoryName: activeCatalogItem?.name,
+        selectedSubCategory: category,
+        subCategoriesCount: filteredSubCategories?.length || 0
+    })
+
     return (
         <View style={styles.Categories}>
             <Txt size={24} weight="Jingleberry">
@@ -37,7 +44,10 @@ const Categories = () => {
                                 styles.Item,
                                 isActive && styles.ItemActive
                             ]}
-                            onPress={() => changeCategory(item.id)}
+                            onPress={() => {
+                                console.log('👆 [Categories] User clicked:', item.name, 'id:', item.id)
+                                changeCategory(item.id)
+                            }}
                         >
                             <Txt weight="Bold" color={isActive ? "#4FBD01" : "#4D4D4D"}>
                                 {item.name}
