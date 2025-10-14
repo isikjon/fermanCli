@@ -78,11 +78,15 @@ const CustomTheme = {
 };
 
 function RootLayout() {
+  console.log('🏗️ [RootLayout] Component mounting...')
   const [currentRoute, setCurrentRoute] = useState('welcome');
   const { isAuth, isDeliverySet, hideNavigation } = useGlobalStore();
   const { isOpen: isAddressModalOpen, closeModal: closeAddressModal } = useAddressModalStore();
 
+  console.log('📊 [RootLayout] State:', { isAuth, isDeliverySet, hideNavigation })
+
   useEffect(() => {
+    console.log('⚙️ [RootLayout] Setting up navigation callback')
     setNavigationCallback((route: string, reset?: boolean) => {
       if (navigationRef.current?.isReady()) {
         if (reset) {

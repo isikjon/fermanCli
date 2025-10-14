@@ -19,12 +19,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -40,12 +40,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -60,6 +60,11 @@ export const deliveryDataObj = {
                     order: [
                         {
                             from: 0,
+                            to: 999,
+                            price: 349
+                        },
+                        {
+                            from: 1000,
                             to: 1000000,
                             price: 0
                         }
@@ -67,10 +72,6 @@ export const deliveryDataObj = {
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -90,12 +91,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -111,12 +112,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -131,6 +132,11 @@ export const deliveryDataObj = {
                     order: [
                         {
                             from: 0,
+                            to: 999,
+                            price: 349
+                        },
+                        {
+                            from: 1000,
                             to: 1000000,
                             price: 0
                         }
@@ -138,10 +144,6 @@ export const deliveryDataObj = {
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -161,12 +163,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -182,12 +184,12 @@ export const deliveryDataObj = {
                         {
                             from: 0,
                             to: 1499,
-                            price: 299
+                            price: 399
                         },
                         {
                             from: 1500,
                             to: 2999,
-                            price: 249
+                            price: 349
                         },
                         {
                             from: 3000,
@@ -202,6 +204,11 @@ export const deliveryDataObj = {
                     order: [
                         {
                             from: 0,
+                            to: 999,
+                            price: 349
+                        },
+                        {
+                            from: 1000,
                             to: 1000000,
                             price: 0
                         }
@@ -209,10 +216,6 @@ export const deliveryDataObj = {
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -243,10 +246,6 @@ export const deliveryDataObj = {
             ]
         },
 
-
-
-
-
         {
             zone: {
                 id: 13,
@@ -256,29 +255,25 @@ export const deliveryDataObj = {
                 id: "7c0dc9ce-ce1e-11ea-0a80-09ca000e5e93",
                 name: "Эгершельд"
             },
-            express: 1000,
+            express: 800,
             slots: [
                 {
                     from: 0,
                     to: 4999,
-                    price: 1000
+                    price: 800
                 },
                 {
                     from: 5000,
                     to: 7999,
-                    price: 800
+                    price: 500
                 },
                 {
                     from: 8000,
                     to: 1000000,
-                    price: 350
+                    price: 0
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -289,29 +284,25 @@ export const deliveryDataObj = {
                 id: "7c0dc9ce-ce1e-11ea-0a80-09ca000e5e93",
                 name: "Эгершельд"
             },
-            express: 1200,
+            express: 800,
             slots: [
                 {
                     from: 0,
                     to: 4999,
-                    price: 1200
+                    price: 800
                 },
                 {
                     from: 5000,
                     to: 7999,
-                    price: 1000
+                    price: 500
                 },
                 {
                     from: 8000,
                     to: 1000000,
-                    price: 500
+                    price: 0
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -322,24 +313,20 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 800,
+            express: 500,
             slots: [
                 {
                     from: 0,
-                    to: 4999,
+                    to: 7999,
                     price: 500
                 },
                 {
-                    from: 5000,
+                    from: 8000,
                     to: 1000000,
                     price: 0
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -350,24 +337,20 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 800,
+            express: 500,
             slots: [
                 {
                     from: 0,
-                    to: 4999,
+                    to: 7999,
                     price: 500
                 },
                 {
-                    from: 5000,
+                    from: 8000,
                     to: 1000000,
                     price: 0
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -378,12 +361,12 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 800,
+            express: 700,
             slots: [
                 {
                     from: 0,
                     to: 6999,
-                    price: 500
+                    price: 700
                 },
                 {
                     from: 7000,
@@ -392,10 +375,6 @@ export const deliveryDataObj = {
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -406,12 +385,12 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 1000,
+            express: 700,
             slots: [
                 {
                     from: 0,
                     to: 6999,
-                    price: 500
+                    price: 700
                 },
                 {
                     from: 7000,
@@ -420,10 +399,6 @@ export const deliveryDataObj = {
                 }
             ]
         },
-
-
-
-
 
         {
             zone: {
@@ -434,23 +409,20 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 800,
+            express: 700,
             slots: [
                 {
                     from: 0,
-                    to: 6999,
-                    price: 500
+                    to: 7999,
+                    price: 700
                 },
                 {
-                    from: 7000,
+                    from: 8000,
                     to: 1000000,
                     price: 0
                 }
             ]
         },
-
-
-
 
         {
             zone: {
@@ -461,12 +433,12 @@ export const deliveryDataObj = {
                 id: "a99d6fdf-0970-11ed-0a80-0ed600075845",
                 name: "Космос"
             },
-            express: 1200,
+            express: 700,
             slots: [
                 {
                     from: 0,
                     to: 7999,
-                    price: 500
+                    price: 700
                 },
                 {
                     from: 8000,

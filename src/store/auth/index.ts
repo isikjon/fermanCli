@@ -4,14 +4,9 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import api from '../../api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import useGlobalStore from '../index'
 import { UserDataType } from '../../types'
-import useBonusStore from '../bonus'
-import useNotificationStore from '../notification'
-import useCheckoutStore from '../checkout'
 import SmsRetriever from 'react-native-sms-retriever'
 
-// Для навигации будем прокидывать callback
 let navigateCallback: ((route: string, reset?: boolean) => void) | null = null
 export const setNavigationCallback = (cb: (route: string, reset?: boolean) => void) => {
     navigateCallback = cb
@@ -72,15 +67,16 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
     },
     changeUserData: (data: UserDataType) => set({ userData: data }),
     sendCode: async () => {
-        const { setMessage } = useNotificationStore.getState()
         try {
+            const { default: useNotificationStore } = await import('../notification')
+            const { setMessage } = useNotificationStore.getState()
+            
             const code = generateCode()
             const phone = normalizePhoneNumber(get().phone)
-            const message = `Ваш код подтверждения: ${code}` // без appHash
+            const message = `Ваш код подтверждения: ${code}`
     
             set({ smsCode: code })
     
-            // Запускаем слушатель SMS
             const registered = await SmsRetriever.startSmsRetriever()
             if (registered) {
                 const sub = SmsRetriever.addSmsListener(event => {
@@ -94,7 +90,7 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
             }
     
             if (phone === "79999999999") {
-                set({ isCode: true }) // тестовый телефон
+                set({ isCode: true })
             } else {
                 const response = await api.auth.sendCode(phone, message)
                 if (response.data.status === "OK") {
@@ -103,12 +99,19 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
             }
         } catch (error) {
             console.log(error)
+            const { default: useNotificationStore } = await import('../notification')
+            const { setMessage } = useNotificationStore.getState()
             setMessage("Ошибка при отправке кода", "error")
         }
     },
     verifyCode: async () => {
-        const { setMessage } = useNotificationStore.getState()
         try {
+            const { default: useNotificationStore } = await import('../notification')
+            const { default: useGlobalStore } = await import('../index')
+            const { default: useBonusStore } = await import('../bonus')
+            const { default: useCheckoutStore } = await import('../checkout')
+            
+            const { setMessage } = useNotificationStore.getState()
             const { code, smsCode, authorizeKilBil } = get()
             const { changeIsAuth, setFirstLaunch, isDeliverySet } = useGlobalStore.getState()
             const { getBonuses } = useBonusStore.getState()
@@ -118,17 +121,14 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
                 await authorizeKilBil()
                 await getBonuses()
                 changeIsAuth(true)
-                setFirstLaunch(false) // Сбрасываем флаг первого запуска при успешной авторизации
+                setFirstLaunch(false)
 
                 if (afterAuth) {
                     navigateCallback?.("checkout")
                     changeAfterAuth(false)
                 } else if (!isDeliverySet) {
-                    // Если доставка не настроена, переходим на экран выбора доставки
-                    // Используем reset для полной очистки стека навигации
                     navigateCallback?.("delivery", true)
                 } else {
-                    // Используем reset для полной очистки стека навигации
                     navigateCallback?.("home", true)
                 }
 
@@ -171,6 +171,7 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
         }
     },
     logout: async () => {
+        const { default: useGlobalStore } = await import('../index')
         const { changeIsAuth } = useGlobalStore.getState()
         await AsyncStorage.removeItem("userData")
         navigateCallback?.("home")

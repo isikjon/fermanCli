@@ -5,5 +5,5 @@ export interface State {
 
     getBonuses: () => Promise<void>,
     changeBonus: () => Promise<void>,
-    calculateBonus: (bonusType: number, express: boolean) => number
+    calculateBonus: (bonusType: number, express: boolean) => Promise<number>
 }

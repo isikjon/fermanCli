@@ -1,15 +1,9 @@
 import { State } from './types'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import useNotificationStore from '../notification'
-import useCartStore from '../cart'
 import { calculateDeliveryPrice, getZoneForLocation, formatPrice } from '../../functions'
-import useDeliveryStore from '../delivery'
 import api from '../../api'
 import { IOrder, OrderItemType } from '../../types'
-import useBonusStore from '../bonus'
-import useAuthStore from '../auth'
-import useProfileStore from '../profile'
 import { deliveryDataObj } from '../../constants/delivery'
 import { selfPickupList } from '../../constants'
 import { ordersDTO } from '../../functions/dtos'
@@ -29,6 +23,9 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
 
     getCustomer: async () => {
         try {
+            const { default: useAuthStore } = await import('../auth')
+            const { default: useProfileStore } = await import('../profile')
+            
             const { userData } = useAuthStore.getState()
             const { formData } = useProfileStore.getState()
 
@@ -56,9 +53,14 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
     },
 
     createOrder: async (bonusType: number, express: boolean, comment?: string) => {
-        const { setMessage } = useNotificationStore.getState()
-
         try {
+            const { default: useNotificationStore } = await import('../notification')
+            const { default: useCartStore } = await import('../cart')
+            const { default: useDeliveryStore } = await import('../delivery')
+            const { default: useBonusStore } = await import('../bonus')
+            
+            const { setMessage } = useNotificationStore.getState()
+
             console.log('🛒 [createOrder] START')
             const { getCustomer, deliveryTime } = get()
             const { clearCart, cartList, calculateAmount } = useCartStore.getState()
@@ -73,7 +75,7 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             const storeId = deliveryData?.type === 0
                 ? deliveryDataObj.zones.find(i => i.zone.name === zone?.description)?.store.id
                 : selfPickupList[0].list[deliveryData?.id || 0].storeId
-            const bonusAmount = calculateBonus(bonusType, express)
+            const bonusAmount = await calculateBonus(bonusType, express)
             const deliveryPrice = zone ? calculateDeliveryPrice(calculateAmount(), zone?.description, express) : 0
             const totalAmount = calculateAmount() + deliveryPrice - bonusAmount
 
@@ -140,11 +142,14 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             if (error?.response) {
                 console.log('❌ [createOrder] ERROR Response:', error.response.data)
             }
+            const { default: useNotificationStore } = await import('../notification')
+            const { setMessage } = useNotificationStore.getState()
             setMessage("Ошибка при создании заказа", "error")
         }
     },
 
     getOrderList: async () => {
+        const { default: useNotificationStore } = await import('../notification')
         const { setMessage } = useNotificationStore.getState()
         const { getCustomer } = get()
         const customerId = await getCustomer()

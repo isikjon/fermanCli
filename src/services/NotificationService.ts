@@ -167,6 +167,36 @@ class NotificationService {
     }
   };
 
+  startMinuteNotifications = () => {
+    try {
+      PushNotification.cancelLocalNotifications({ id: '1001' as any });
+    } catch {}
+
+    PushNotification.localNotificationSchedule({
+      id: 1001,
+      channelId: 'default-channel-id',
+      title: 'Напоминание',
+      message: 'Это локальное уведомление раз в минуту',
+      allowWhileIdle: true,
+      date: new Date(Date.now() + 60 * 1000),
+      repeatType: 'minute',
+      playSound: true,
+      soundName: 'default',
+      vibrate: true,
+    });
+
+    console.log('Scheduled repeating notification every minute');
+  };
+
+  stopMinuteNotifications = () => {
+    try {
+      PushNotification.cancelLocalNotifications({ id: '1001' as any });
+      console.log('Cancelled repeating minute notification');
+    } catch (e) {
+      console.log('Error cancelling minute notification', e);
+    }
+  };
+
   private getLastOrderDate = async (): Promise<Date | null> => {
     try {
       const lastOrderDateStr = await AsyncStorage.getItem('lastOrderDate');

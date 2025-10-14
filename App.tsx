@@ -1,17 +1,7 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, { useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import RootLayout from './src/RootLayout';
 import NotificationService from './src/services/NotificationService';
-import { getApps } from '@react-native-firebase/app';
-import ErrorBoundary from './src/components/ErrorBoundary';
-import { ImageCacheManager } from './src/utils/imageCacheManager';
+import firebase from '@react-native-firebase/app';
 
 export default function App() {
     console.log('App rendered');
@@ -21,12 +11,15 @@ export default function App() {
             try {
                 console.log('Starting app initialization...');
                 
-                const apps = getApps();
-                if (apps.length === 0) {
-                    console.log('Firebase already initialized via google-services.json');
+                if (!firebase.apps.length) {
+                    console.log('Initializing Firebase...');
+                    await firebase.initializeApp();
+                    console.log('Firebase initialized successfully');
                 } else {
                     console.log('Firebase already initialized');
                 }
+                
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
                 console.log('Initializing NotificationService...');
                 NotificationService.initialize();
@@ -36,22 +29,14 @@ export default function App() {
                 console.log('Permissions requested');
                 
                 setTimeout(() => {
-                    console.log('Checking and scheduling notifications...');
-                    NotificationService.checkAndScheduleNotifications();
-                    NotificationService.updateLastActivityDate();
-                }, 2000);
-                
-                setTimeout(async () => {
-                    console.log('🧹 Starting automatic cache cleanup...');
-                    await ImageCacheManager.autoCleanup();
-                    console.log('✅ Cache cleanup completed');
-                }, 5000);
+                    console.log('Starting minute notifications...');
+                    NotificationService.startMinuteNotifications();
+                }, 1000);
                 
                 console.log('App initialized successfully');
-                
             } catch (error) {
-                console.error('❌ Initialization error:', error);
-                console.error('❌ Error stack:', error.stack);
+                console.error('Initialization error:', error);
+                console.error('Error stack:', error.stack);
             }
         }
 
@@ -66,9 +51,5 @@ export default function App() {
         };
     }, []);
 
-    return (
-        <ErrorBoundary>
-            <RootLayout />
-        </ErrorBoundary>
-    );
+    return <RootLayout />;
 }

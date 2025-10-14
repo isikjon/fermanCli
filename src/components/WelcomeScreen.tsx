@@ -3,6 +3,7 @@ import { View, StyleSheet, Dimensions } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import useGlobalStore from '../store'
 import useAuthStore from '../store/auth'
+import useBonusStore from '../store/bonus'
 import FastImage from 'react-native-fast-image'
 
 interface Props {
@@ -12,14 +13,27 @@ const WelcomeScreen: React.FC<Props> = () => {
     const navigation = useNavigation<any>()
     const { isFirstLaunch, isAuth, isDeliverySet } = useGlobalStore()
     const { initializeAuth } = useAuthStore()
+    const { getBonuses } = useBonusStore()
 
     useEffect(() => {
         const initializeApp = async () => {
-            // Инициализируем авторизацию из AsyncStorage
-            await initializeAuth()
+            console.log('🚀 [WelcomeScreen] Starting initialization...')
+            
+            try {
+                await initializeAuth()
+                console.log('✅ [WelcomeScreen] Auth initialized')
+                
+                if (isAuth) {
+                    console.log('💰 [WelcomeScreen] Loading bonuses for authorized user...')
+                    await getBonuses()
+                    console.log('✅ [WelcomeScreen] Bonuses loaded')
+                }
+            } catch (error) {
+                console.log('❌ [WelcomeScreen] Initialization error:', error)
+            }
             
             const timer = setTimeout(() => {
-                console.log('WelcomeScreen: isFirstLaunch =', isFirstLaunch, 'isAuth =', isAuth, 'isDeliverySet =', isDeliverySet)
+                console.log('🔍 [WelcomeScreen] Checking state: isFirstLaunch =', isFirstLaunch, 'isAuth =', isAuth, 'isDeliverySet =', isDeliverySet)
                 
                 if (!isAuth) {
                     // Если не авторизован - обязательно на авторизацию

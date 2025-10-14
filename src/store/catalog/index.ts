@@ -3,9 +3,19 @@ import { CachedState, State } from './types'
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-// Упрощенная загрузка изображений
+import { ImageDownloadQueue } from '../../utils/imageDownloadQueue'
 
-// Упрощенная загрузка изображений - только метаданные
+const imageDownloadQueue = new ImageDownloadQueue()
+const MAX_IMAGE_CACHE_SIZE = 50
+const imageCacheAccessOrder: string[] = []
+
+let isDownloadFunctionSet = false
+const ensureDownloadFunction = () => {
+    if (!isDownloadFunctionSet && api?.products?.downloadImage) {
+        imageDownloadQueue.setDownloadFunction(api.products.downloadImage)
+        isDownloadFunctionSet = true
+    }
+}
 
 const useCatalogStore = create<CachedState>()(
     persist(
@@ -29,6 +39,7 @@ const useCatalogStore = create<CachedState>()(
             productsCache: {},
             searchCache: {},
             imageMetadataCache: {},
+            imageCache: {},
             productsCountCache: {},
 
             changeSearch: (value) => set({ search: value }),
@@ -244,6 +255,7 @@ const useCatalogStore = create<CachedState>()(
                                     }
                                     
                                     if (imageMetadata) {
+                                        ensureDownloadFunction()
                                         const localImage = await imageDownloadQueue.add(imageMetadata, 'high')
                                         if (localImage) {
                                             const newCache = { ...get().imageCache, [response.image]: localImage };
@@ -296,6 +308,7 @@ const useCatalogStore = create<CachedState>()(
                 productsCache: state.productsCache,
                 searchCache: state.searchCache,
                 imageMetadataCache: state.imageMetadataCache,
+                imageCache: state.imageCache,
                 productsCountCache: state.productsCountCache,
             })
         }

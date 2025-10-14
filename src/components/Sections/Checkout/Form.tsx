@@ -17,18 +17,18 @@ import useCheckoutStore from '../../../store/checkout'
 import CartItem from '../../../ui/CartItem'
 
 const Form = () => {
-    const navigation = useNavigation() // вместо router
+    const navigation = useNavigation()
     const { calculateAmount, cartList } = useCartStore()
     const [bonusAction, setBonusAction] = useState<"save" | "writeOff">("save")
     const [paymentMethod, setPaymentMethod] = useState(0)
     const [express, setExpress] = useState(false)
     const [expressTime, setExpressTime] = useState(3)
     const [comment, setComment] = useState('')
+    const [bonusAmount, setBonusAmount] = useState(0)
     const { deliveryData, addresses, getDelivery } = useDeliveryStore()
     const { createOrder, deliveryTime, changeDeliveryTime } = useCheckoutStore()
     const { bonuses, calculateBonus, getBonuses } = useBonusStore()
     const bonusType = bonusAction === "writeOff" ? 0 : 1
-    const bonusAmount = calculateBonus(bonusType, express)
 
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
@@ -52,6 +52,14 @@ const Form = () => {
         getDelivery()
         getBonuses()
     }, [getDelivery, getBonuses])
+
+    useEffect(() => {
+        const updateBonus = async () => {
+            const amount = await calculateBonus(bonusType, express)
+            setBonusAmount(amount)
+        }
+        updateBonus()
+    }, [bonusType, express, calculateBonus])
 
     return (
         <View style={styles.Form}>

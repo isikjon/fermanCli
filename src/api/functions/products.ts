@@ -1,3 +1,4 @@
+import 'react-native-get-random-values';
 import { CategoryDTO, ProductDTO } from "../../functions/dtos"
 import useCatalogStore from "../../store/catalog"
 import axios from "axios"
@@ -15,18 +16,8 @@ export async function getProductsCount(category: string): Promise<number> {
     try {
         console.log('🔢 [getProductsCount] Counting products for category:', category);
         
-        const { deliveryData, addresses } = useDeliveryStore.getState();
-        const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
-        const zone = activeDelivery && getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng) || null;
-        const storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
-
-        const url = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";
-        const store = storeId ? `https://api.moysklad.ru/api/remap/1.2/entity/store/${storeId.store.id}` : null;
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-
-        const fullUrl = storeId
-            ? `${url}?filter=store=${store};productFolder=${productFolder}&limit=0`
-            : `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=0`;
+        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=0`;
 
         console.log('🌐 [getProductsCount] Request URL:', fullUrl);
 
@@ -49,18 +40,9 @@ export async function getProducts(offset: number, category: string) {
         console.log('📦 [getProducts] Loading products:', { category, offset });
         
         const { changeIsPagination } = useCatalogStore.getState();
-        const { deliveryData, addresses } = useDeliveryStore.getState();
-        const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
-        const zone = activeDelivery && getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng) || null;
-        const storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
 
-        const url = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";
-        const store = storeId ? `https://api.moysklad.ru/api/remap/1.2/entity/store/${storeId.store.id}` : null;
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-
-        const fullUrl = storeId
-            ? `${url}?filter=store=${store};productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`
-            : `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
+        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
 
         console.log('🌐 [getProducts] Request URL:', fullUrl);
 
@@ -290,8 +272,19 @@ export async function getProduct(id: string) {
     try {
         const { deliveryData, addresses } = useDeliveryStore.getState();
         const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
-        const zone = activeDelivery && getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng) || null;
-        const storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
+        
+        let storeId;
+        
+        if (deliveryData?.type === 1) {
+            storeId = deliveryDataObj.zones[deliveryData.city || 0];
+        } else if (activeDelivery) {
+            const zone = getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng);
+            storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
+        }
+        
+        if (!storeId) {
+            storeId = deliveryDataObj.zones.find(i => i.store.name === "Эгершельд");
+        }
 
         // Запрашиваем остатки со склада
         const stockUrl = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";

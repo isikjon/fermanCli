@@ -4,15 +4,21 @@ import Header from '../components/Header';
 import Sections from '../components/Sections';
 import useCatalogStore from '../store/catalog';
 import useGlobalStore from '../store';
+import useBonusStore from '../store/bonus';
 
 export default function home() {
     const { getCategories } = useCatalogStore();
-    const { enableScroll } = useGlobalStore();
-    const scrollRef = useRef<ScrollView>(null); // реф на ScrollView
+    const { enableScroll, isAuth } = useGlobalStore();
+    const { getBonuses } = useBonusStore();
+    const scrollRef = useRef<ScrollView>(null);
 
     useEffect(() => {
         getCategories();
-    }, [getCategories]);
+        if (isAuth) {
+            console.log('💰 [Home] Loading bonuses...');
+            getBonuses();
+        }
+    }, [getCategories, getBonuses, isAuth]);
 
     return (
         <View style={styles.Container}>
