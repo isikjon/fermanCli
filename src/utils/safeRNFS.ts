@@ -41,10 +41,16 @@ export class SafeRNFS {
                 console.log('⚠️ [SafeRNFS] Invalid path for unlink:', path);
                 return;
             }
+            
+            const fileExists = await RNFS.exists(path);
+            if (!fileExists) {
+                console.log('⚠️ [SafeRNFS] File does not exist, skipping unlink:', path);
+                return;
+            }
+            
             await RNFS.unlink(path);
         } catch (error) {
             console.log('⚠️ [SafeRNFS] Error unlinking file:', path, error);
-            // Не бросаем ошибку, просто логируем
         }
     }
 
@@ -78,23 +84,23 @@ export class SafeRNFS {
         try {
             if (!options || !options.fromUrl || !options.toFile) {
                 console.log('⚠️ [SafeRNFS] Invalid download options provided:', options);
-                throw new Error('Invalid download options provided');
+                return { promise: Promise.reject(new Error('Invalid download options')) };
             }
             
             if (!this.isValidPath(options.fromUrl)) {
                 console.log('⚠️ [SafeRNFS] Invalid fromUrl provided:', options.fromUrl);
-                throw new Error('Invalid fromUrl provided');
+                return { promise: Promise.reject(new Error('Invalid fromUrl')) };
             }
             
             if (!this.isValidPath(options.toFile)) {
                 console.log('⚠️ [SafeRNFS] Invalid toFile provided:', options.toFile);
-                throw new Error('Invalid toFile provided');
+                return { promise: Promise.reject(new Error('Invalid toFile')) };
             }
             
             return await RNFS.downloadFile(options);
         } catch (error) {
             console.log('⚠️ [SafeRNFS] Error downloading file:', options?.fromUrl, error);
-            throw error;
+            return { promise: Promise.reject(error) };
         }
     }
 
@@ -102,12 +108,18 @@ export class SafeRNFS {
         try {
             if (!this.isValidPath(from) || !this.isValidPath(to)) {
                 console.log('⚠️ [SafeRNFS] Invalid path for moveFile:', from, to);
-                throw new Error('Invalid paths for moveFile');
+                return;
             }
+            
+            const fileExists = await RNFS.exists(from);
+            if (!fileExists) {
+                console.log('⚠️ [SafeRNFS] Source file does not exist for moveFile:', from);
+                return;
+            }
+            
             await RNFS.moveFile(from, to);
         } catch (error) {
             console.log('⚠️ [SafeRNFS] Error moving file:', from, to, error);
-            throw error;
         }
     }
 
@@ -115,12 +127,18 @@ export class SafeRNFS {
         try {
             if (!this.isValidPath(from) || !this.isValidPath(to)) {
                 console.log('⚠️ [SafeRNFS] Invalid path for copyFile:', from, to);
-                throw new Error('Invalid paths for copyFile');
+                return;
             }
+            
+            const fileExists = await RNFS.exists(from);
+            if (!fileExists) {
+                console.log('⚠️ [SafeRNFS] Source file does not exist for copyFile:', from);
+                return;
+            }
+            
             await RNFS.copyFile(from, to);
         } catch (error) {
             console.log('⚠️ [SafeRNFS] Error copying file:', from, to, error);
-            throw error;
         }
     }
 
