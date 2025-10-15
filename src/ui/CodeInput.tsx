@@ -72,7 +72,8 @@ const styles = StyleSheet.create({
     },
     cellText: {
         fontSize: 24,
-        fontFamily: "Bold"
+        fontFamily: "Bold",
+        color: "#4D4D4D"
     },
     focusCell: {
         borderColor: '#4FBD01',

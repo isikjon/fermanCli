@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
         width: "100%",
         flex: 1,
         fontSize: 16,
-        fontFamily: "Regular"
+        fontFamily: "Regular",
+        color: "#4D4D4D"
     }
 })

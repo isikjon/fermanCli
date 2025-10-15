@@ -60,5 +60,6 @@ const styles = StyleSheet.create({
     },
     InputElement: {
         flex: 1,
+        color: "#4D4D4D"
     },
 });

@@ -20,7 +20,7 @@ interface Props {
 const Input = forwardRef<TextInput, Props>(({ onChange, label, placeholder, value, withIcon, readonly, maxLenght, isNumber, onFocus, autoFocus, multiline }, ref) => {
     return (
         <View style={styles.InputBox}>
-            {label && <Txt size={16} weight='Bold'>{label}</Txt>}
+            {label && <Txt size={16} weight='RobotoCondensed-Bold'>{label}</Txt>}
 
             <View style={styles.Input}>
                 <TextInput
@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
         gap: 8
     },
     InputElement: {
-        flex: 1
+        flex: 1,
+        color: "#4D4D4D"
     }
 })

@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
+import { Appearance } from 'react-native';
 import RootLayout from './src/RootLayout';
 import NotificationService from './src/services/NotificationService';
 import firebase from '@react-native-firebase/app';
+
+Appearance.setColorScheme('light');
 
 export default function App() {
     console.log('App rendered');
