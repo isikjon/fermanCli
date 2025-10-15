@@ -5,7 +5,6 @@ import useCartStore from '../store/cart';
 import useDeliveryStore from '../store/delivery';
 import { getZoneForLocation, formatPrice } from '../functions';
 import { deliveryDataObj } from '../constants/delivery';
-import NavImg from '../assets/svg/NavImg';
 
 interface Props {
     currentRoute: string;
@@ -111,9 +110,8 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
 
     return (
         <View style={styles.container}>
-            <NavImg style={styles.icon} />
             <View style={styles.banner}>
-                <Txt size={14} weight="Bold" color="#fff" style={styles.text}>
+                <Txt size={14} weight="RobotoCondensed-Bold" color="#fff" style={styles.text}>
                     {bannerText}
                 </Txt>
             </View>
@@ -124,12 +122,6 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
 const styles = StyleSheet.create({
     container: {
         position: 'relative',
-    },
-    icon: {
-        position: 'absolute',
-        top: -35,
-        right: 20,
-        zIndex: 10,
     },
     banner: {
         backgroundColor: '#FF6B6B',
