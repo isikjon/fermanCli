@@ -16,7 +16,27 @@ const Total = () => {
     const { deliveryData, addresses } = useDeliveryStore()
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
-    const deliveryPrice = deliveryData?.type === 0 ? zoneName ? calculateDeliveryPrice(calculateAmount(), zoneName.description) : 0 : 0
+    
+    let deliveryPrice = 0
+    if (deliveryData?.type === 0) {
+        if (zoneName) {
+            try {
+                deliveryPrice = calculateDeliveryPrice(calculateAmount(), zoneName.description)
+                console.log('💰 [Cart Total] Delivery price calculated:', {
+                    zone: zoneName.description,
+                    amount: calculateAmount(),
+                    deliveryPrice: deliveryPrice
+                })
+            } catch (error) {
+                console.log('❌ [Cart Total] Error calculating delivery price:', error)
+                deliveryPrice = 0
+            }
+        } else {
+            console.log('⚠️ [Cart Total] No zone found for address')
+            deliveryPrice = 0
+        }
+    }
+    
     const { isAuth } = useGlobalStore()
     const { changeAfterAuth } = useCheckoutStore()
 

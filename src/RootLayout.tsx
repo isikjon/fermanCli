@@ -124,10 +124,9 @@ function RootLayout() {
         theme={CustomTheme} 
         onStateChange={onStateChange}
       >
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <SafeAreaView style={styles.safeArea} edges={[]}>
           <View
             style={styles.keyboard}
-  
           >
             <Stack.Navigator 
               screenOptions={{ 
@@ -178,6 +177,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
+    paddingTop: '2%',
   },
   keyboard: {
     flex: 1,

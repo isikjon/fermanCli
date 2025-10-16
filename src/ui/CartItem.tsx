@@ -23,7 +23,16 @@ const CartItem: FC<Props> = ({ item }) => {
     const [image, setImage] = useState<string | null>(null)
     const { removeItemFromCart, changeCartItem } = useCartStore()
     const [amount, setAmount] = useState(item.amount)
-    const price = item.isWeighted ? item.price * (item.weight || 0.1) : item.price
+    const [weight, setWeight] = useState(item.weight || 0.1)
+    
+    useEffect(() => {
+        setAmount(item.amount)
+        setWeight(item.weight || 0.1)
+    }, [item.amount, item.weight])
+    
+    const displayAmount = item.isWeighted ? weight : amount
+    const step = item.isWeighted ? 0.1 : 1
+    const price = item.isWeighted ? item.price * weight : item.price * amount
 
     const getImageUrl = useCallback(async () => {
         const imageMetadata = await getImage(item.image)
@@ -58,27 +67,41 @@ const CartItem: FC<Props> = ({ item }) => {
                         )}
 
                         <View style={styles.Title}>
-                            <Txt weight='Bold' size={16} lines={3}>{item.name}</Txt>
-                            {item.isWeighted && <Txt>{item.weight?.toFixed(1) || 0.1} кг</Txt>}
-                            <Txt>{`${item.amount}x${formatPrice(price)}=${formatPrice(item.amount * price)} руб.`}</Txt>
+                            <Txt weight='RobotoCondensed-Bold' size={16} lines={3}>{item.name}</Txt>
+                            {item.isWeighted ? (
+                                <>
+                                    <Txt>{weight.toFixed(1)} кг</Txt>
+                                    <Txt>{`${weight.toFixed(1)}кг x ${formatPrice(item.price)}/кг = ${formatPrice(price)} руб.`}</Txt>
+                                </>
+                            ) : (
+                                <Txt>{`${amount}шт x ${formatPrice(item.price)} = ${formatPrice(price)} руб.`}</Txt>
+                            )}
                         </View>
                     </Row>
                 </TouchableOpacity>
 
                 <Counter
-                    amount={amount}
+                    amount={displayAmount}
                     onChange={value => {
-                        setAmount(value)
-                        changeCartItem(item.id, { ...item, amount: value })
+                        if (item.isWeighted) {
+                            setWeight(value)
+                            changeCartItem(item.id, { ...item, weight: value })
+                        } else {
+                            setAmount(value)
+                            changeCartItem(item.id, { ...item, amount: value })
+                        }
                     }}
+                    step={step}
+                    min={item.isWeighted ? 0.1 : 1}
                     max={item.stock}
+                    sign={item.isWeighted ? "кг" : ""}
                     isNotFull
                     isSmall
                 />
             </Row>
 
             <Row>
-                <Txt size={28} weight='Bold'>{`${formatPrice(item.amount * price)} руб.`}</Txt>
+                <Txt size={28} weight='RobotoCondensed-Bold'>{`${formatPrice(price)} руб.`}</Txt>
                 <TouchableOpacity activeOpacity={0.5} onPress={() => removeItemFromCart(item.id)}>
                     <Icons.Trash />
                 </TouchableOpacity>

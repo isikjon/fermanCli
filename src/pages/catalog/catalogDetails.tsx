@@ -39,7 +39,7 @@ const CatalogDetails = () => {
 
     const handleScroll = useCallback(() => {
         categoriesRef.current?.measure((_fx, _fy, _w, height, _px, py) => {
-            const threshold = (StatusBar.currentHeight ?? 0) + 10
+            const threshold = 10
             const bottomEdge = py + height
 
             if (bottomEdge <= threshold && !showFixed) {
@@ -135,7 +135,7 @@ export default CatalogDetails
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: StatusBar.currentHeight,
+        paddingTop: 0,
         flex: 1,
         backgroundColor: '#fff',
     },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     },
     FixedCategories: {
         position: 'absolute',
-        top: StatusBar.currentHeight ?? 0,
+        top: 0,
         left: 0,
         right: 0,
         backgroundColor: '#fff',

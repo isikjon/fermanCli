@@ -39,7 +39,7 @@ export default profile
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: StatusBar.currentHeight,
+        paddingTop: 0,
         flex: 1,
         backgroundColor: "#fff",
         paddingBottom: 70

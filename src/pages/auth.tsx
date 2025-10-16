@@ -114,7 +114,7 @@ export default auth
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: StatusBar.currentHeight,
+        paddingTop: 0,
         flex: 1,
         backgroundColor: "#fff"
     },
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     },
     SkipButton: {
         position: 'absolute',
-        top: (StatusBar.currentHeight || 0) + 16,
+        top: 16,
         right: 16,
         zIndex: 1000,
         padding: 8,

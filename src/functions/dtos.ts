@@ -103,6 +103,10 @@ export function ProductDTO(data: any) {
                     console.log('⚠️ [ProductDTO] Product with zero price:', product.name, 'id:', product.id);
                 }
 
+                if (stock !== undefined && stock <= 0) {
+                    console.log('⚠️ [ProductDTO] Product out of stock:', product.name?.substring(0, 50), 'stock:', stock, 'id:', product.id);
+                }
+
                 return formattedProduct;
             } catch (error) {
                 console.log('❌ [ProductDTO] Error processing product:', product?.name, 'id:', product?.id, 'error:', error);

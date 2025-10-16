@@ -270,90 +270,59 @@ export async function searchProduct(name: string) {
 
 export async function getProduct(id: string) {
     try {
-        const { deliveryData, addresses } = useDeliveryStore.getState();
-        const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
+        console.log('📦 [getProduct] Loading product:', id);
         
-        let storeId;
+        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=id=${id}&expand=attributes`;
         
-        if (deliveryData?.type === 1) {
-            storeId = deliveryDataObj.zones[deliveryData.city || 0];
-        } else if (activeDelivery) {
-            const zone = getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng);
-            storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
-        }
-        
-        if (!storeId) {
-            storeId = deliveryDataObj.zones.find(i => i.store.name === "Эгершельд");
-        }
+        console.log('🌐 [getProduct] Request URL:', fullUrl);
 
-        // Запрашиваем остатки со склада
-        const stockUrl = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";
-        const productUrl = `https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`;
-        const store = storeId ? `https://api.moysklad.ru/api/remap/1.2/entity/store/${storeId.store.id}` : null;
-
-        // Получаем основные данные товара
-        const productResponse = await axios.get(productUrl, {
-            headers: AUTH
+        const response = await axios.get(fullUrl, {
+            headers: AUTH,
         });
 
-        let stock = undefined;
+        console.log('📡 [getProduct] Response:', {
+            rowsCount: response.data.rows?.length || 0,
+            firstRow: response.data.rows?.[0] ? {
+                id: response.data.rows[0].id,
+                name: response.data.rows[0].name?.substring(0, 50),
+                stock: response.data.rows[0].stock,
+                quantity: response.data.rows[0].quantity
+            } : null
+        });
 
-        // Получаем остатки со склада
-        if (store) {
-            const stockFilter = `${stockUrl}?filter=store=${store};productid=${id}`;
-            console.log('🔍 Fetching stock from:', stockFilter);
-            try {
-                const stockResponse = await axios.get(stockFilter, {
-                    headers: AUTH
-                });
-                console.log('📊 Stock API response:', {
-                    rowsCount: stockResponse.data.rows?.length || 0,
-                    firstRow: stockResponse.data.rows?.[0] || null,
-                    meta: stockResponse.data.meta
-                });
-                if (stockResponse.data.rows && stockResponse.data.rows.length > 0) {
-                    stock = stockResponse.data.rows[0].stock;
-                }
-            } catch (error) {
-                console.log('getProduct: stock fetch error:', error);
-            }
-        } else {
-            console.log('⚠️ No store selected, cannot fetch stock');
+        if (!response.data.rows || response.data.rows.length === 0) {
+            console.log('⚠️ [getProduct] Product not found in assortment, trying direct product endpoint');
+            const directResponse = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`, {
+                headers: AUTH
+            });
+            const products = ProductDTO([directResponse.data]);
+            return products[0];
         }
 
-        // Если не получили остатки через API, пробуем получить из самого товара
-        if (stock === undefined && productResponse.data.quantity !== undefined) {
-            stock = productResponse.data.quantity;
-            console.log('📦 Using quantity from product data:', stock);
-        }
-
-        // Добавляем остатки к данным товара
-        const productData = {
-            ...productResponse.data,
-            stock: stock,
-            quantity: stock,
-            stockStore: stock
-        };
-
-        const product = ProductDTO([productData])[0];
+        const products = ProductDTO(response.data.rows.filter(Boolean));
         
-        // Логируем информацию о товаре и остатках
-        console.log('📦 Product loaded:', {
+        if (products.length === 0) {
+            console.log('❌ [getProduct] Failed to process product');
+            throw new Error('Product not found');
+        }
+
+        const product = products[0];
+        
+        console.log('✅ [getProduct] Product loaded:', {
             name: product.name?.substring(0, 50),
             id: product.id,
             stock: product.stock,
-            price: product.price,
-            store: storeId?.store.name || 'no store'
+            price: product.price
         });
 
         return product;
     } catch (error) {
-        console.log("getProduct error:", error);
-        // Fallback - пытаемся получить хотя бы базовые данные
+        console.log('❌ [getProduct] ERROR:', error);
         const response = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`, {
             headers: AUTH
         });
-        return ProductDTO([response.data])[0];
+        const products = ProductDTO([response.data]);
+        return products[0];
     }
 }
 

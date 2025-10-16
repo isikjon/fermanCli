@@ -59,6 +59,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
     const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
     const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
+    const isOutOfStock = useMemo(() => item.stock !== undefined && item.stock <= 0, [item.stock])
     
     const handleAmountChange = useCallback((value: number) => {
         setLocalAmount(value)
@@ -66,6 +67,11 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     }, [item.id, setSelectedAmount])
     
     const handleAddToCart = useCallback(() => {
+        if (isOutOfStock) {
+            setMessage('Товар закончился на складе', 'error')
+            return
+        }
+        
         if (!inCart) {
             performanceMonitor.logInteraction('Add to Cart', item.name.substring(0, 30))
             const cartData = cartList.find(i => i.id === item.id)
@@ -94,7 +100,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             performanceMonitor.logInteraction('Go to Cart', 'ProductCard')
             navigation.navigate('cart' as never)
         }
-    }, [inCart, item, localAmount, cartList, setMessage, addItemToCart, clearSelectedAmount, navigation])
+    }, [isOutOfStock, inCart, item, localAmount, cartList, setMessage, addItemToCart, clearSelectedAmount, navigation])
     
     const handleProductPress = useCallback(() => {
         performanceMonitor.logInteraction('Click Product Card', item.name.substring(0, 30))
@@ -124,31 +130,39 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
                 <View style={styles.Info}>
                     <Txt>{item.name}</Txt>
-                    <Txt weight='Bold'>
+                    <Txt weight='RobotoCondensed-Bold'>
                         {`${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`}
                     </Txt>
-                    <Txt size={14} color="#666">
-                        Итого: {totalPrice} ₽
-                    </Txt>
+                    {!isOutOfStock ? (
+                        <Txt size={14} color="#666">
+                            Итого: {totalPrice} ₽
+                        </Txt>
+                    ) : (
+                        <Txt size={14} color="#FF6B6B" weight='RobotoCondensed-Bold'>
+                            Нет в наличии
+                        </Txt>
+                    )}
                 </View>
             </View>
 
             <View style={styles.Box}>
-                <Counter
-                    amount={localAmount}
-                    step={step}
-                    onChange={handleAmountChange}
-                    sign={item.weighed ? "кг" : ""}
-                    max={item.stock}
-                    isSmall
-                />
+                {!isOutOfStock && (
+                    <Counter
+                        amount={localAmount}
+                        step={step}
+                        onChange={handleAmountChange}
+                        sign={item.weighed ? "кг" : ""}
+                        max={item.stock}
+                        isSmall
+                    />
+                )}
 
                 <Button
                     onClick={handleAddToCart}
-                    background={inCart ? "#EEEEEE" : "#4FBD01"}
+                    background={isOutOfStock ? "#CCCCCC" : (inCart ? "#EEEEEE" : "#4FBD01")}
                 >
-                    <Txt color={inCart ? "#4D4D4D" : "#fff"} weight='Bold' size={18}>
-                        {inCart ? "В корзине" : "В корзину"}
+                    <Txt color={isOutOfStock ? "#666666" : (inCart ? "#4D4D4D" : "#fff")} weight='RobotoCondensed-Bold' size={18}>
+                        {isOutOfStock ? "Недоступно" : (inCart ? "В корзине" : "В корзину")}
                     </Txt>
                 </Button>
             </View>

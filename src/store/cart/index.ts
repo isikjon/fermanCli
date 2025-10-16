@@ -10,7 +10,13 @@ const useCartStore = create<State>()(devtools((set, get) => ({
 
     calculateAmount: () => {
         const cartList = get().cartList;
-        const total = cartList.reduce((sum, item) => sum + item.amount * (item.isWeighted ? item.price * (item.weight || 0.1) : item.price), 0);
+        const total = cartList.reduce((sum, item) => {
+            if (item.isWeighted) {
+                return sum + (item.price * (item.weight || 0.1));
+            } else {
+                return sum + (item.amount * item.price);
+            }
+        }, 0);
         return parseFloat(formatPrice(total));
     },
 
