@@ -124,7 +124,8 @@ function RootLayout() {
         theme={CustomTheme} 
         onStateChange={onStateChange}
       >
-        <SafeAreaView style={styles.safeArea} edges={[]}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+          <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
           <View
             style={styles.keyboard}
           >
@@ -163,7 +164,6 @@ function RootLayout() {
             )}
             <Alert />
             <AddressModal visible={isAddressModalOpen} onClose={closeAddressModal} />
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
           </View>
         </SafeAreaView>
       </NavigationContainer>
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#ffffff',
-    paddingTop: '2%',
   },
   keyboard: {
     flex: 1,

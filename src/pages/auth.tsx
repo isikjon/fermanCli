@@ -114,7 +114,7 @@ export default auth
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: 0,
+        paddingTop: 16,
         flex: 1,
         backgroundColor: "#fff"
     },

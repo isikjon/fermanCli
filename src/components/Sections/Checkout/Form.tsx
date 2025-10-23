@@ -91,17 +91,15 @@ const Form = () => {
             </TouchableOpacity>
 
             {/* Время доставки/самовывоза */}
-            {!express && (
-                <View style={styles.Group}>
-                    <Txt size={16} weight='Bold'>Время {deliveryData?.type === 0 ? "доставки" : "самовывоза"}</Txt>
-                    <Select
-                        array={slotList.map(i => i.value)}
-                        onChange={value => changeDeliveryTime(slotList[value].id)}
-                        value={slotList.findIndex(i => i.id === deliveryTime)}
-                        isScrollEnabled={true}
-                    />
-                </View>
-            )}
+            <View style={styles.Group}>
+                <Txt size={16} weight='Bold'>Время {deliveryData?.type === 0 ? "доставки" : "самовывоза"}</Txt>
+                <Select
+                    array={slotList.map(i => i.value)}
+                    onChange={value => changeDeliveryTime(slotList[value].id)}
+                    value={slotList.findIndex(i => i.id === deliveryTime)}
+                    isScrollEnabled={true}
+                />
+            </View>
 
             {/* Бонусы */}
             <View style={styles.Bonus}>

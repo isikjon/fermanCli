@@ -158,7 +158,7 @@ export default Header
 
 const styles = StyleSheet.create({
     Logo: { width: 74, height: 74 },
-    Header: { gap: 30, paddingHorizontal: 16, paddingBottom: 24 },
+    Header: { gap: 30, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
     TopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 24 },
     ControllBar: { flexDirection: 'row', alignItems: 'center', gap: 20, justifyContent: 'space-between' },
     Box: { width: "100%" },

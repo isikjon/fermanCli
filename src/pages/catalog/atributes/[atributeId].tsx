@@ -49,7 +49,7 @@ export default Atribute;
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: 0,
+        paddingTop: 8,
         flex: 1,
         backgroundColor: '#fff',
     },

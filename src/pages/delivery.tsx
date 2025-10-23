@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     Container: {
         flex: 1,
         backgroundColor: '#fff',
+        paddingTop: 8,
         paddingBottom: 70,
     },
     BackBox: {

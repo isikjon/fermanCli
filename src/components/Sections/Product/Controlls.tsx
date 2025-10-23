@@ -57,19 +57,6 @@ const Controlls = () => {
     if (!activeProduct) return null
 
     const maxStock = activeProduct.stock
-    const isOutOfStock = maxStock !== undefined && maxStock <= 0
-
-    // Логируем остатки товара
-    useEffect(() => {
-        console.log('📦 Product page stock info:', {
-            name: activeProduct.name?.substring(0, 50),
-            id: activeProduct.id,
-            stock: activeProduct.stock,
-            isOutOfStock: isOutOfStock,
-            inCart: inCart,
-            currentAmount: activeProduct.weighed ? weightAmount : amount
-        });
-    }, [activeProduct, inCart, amount, weightAmount, isOutOfStock]);
 
     const totalPrice = formatPrice(activeProduct.price * (activeProduct.weighed ? weightAmount : 1))
 
@@ -78,16 +65,6 @@ const Controlls = () => {
             <Row gap={12}>
                 <View style={styles.FlexBox}>
                     <Txt weight='Jingleberry' size={22} lineHeight={26}>{activeProduct.name}</Txt>
-                    {maxStock !== undefined && !isOutOfStock && (
-                        <Txt size={14} color="#999" style={{ marginTop: 4 }}>
-                            Осталось: {maxStock} {activeProduct.weighed ? 'кг' : 'шт'}
-                        </Txt>
-                    )}
-                    {isOutOfStock && (
-                        <Txt size={14} color="#FF6B6B" weight='RobotoCondensed-Bold' style={{ marginTop: 4 }}>
-                            Товар закончился
-                        </Txt>
-                    )}
                 </View>
 
                 <View style={styles.Price}>
@@ -99,7 +76,7 @@ const Controlls = () => {
             </Row>
 
             <Row>
-                {!inCart && !isOutOfStock && (
+                {!inCart && (
                     <Counter 
                         amount={activeProduct.weighed ? weightAmount : amount} 
                         onChange={(value) => {
@@ -122,11 +99,6 @@ const Controlls = () => {
                 <View style={styles.FlexBox}>
                     <Button
                         onClick={() => {
-                            if (isOutOfStock) {
-                                setMessage('Товар закончился на складе', 'error')
-                                return
-                            }
-                            
                             if (activeProduct && !inCart) {
                                 const cartData = cartList.find(i => i.id === activeProduct.id)
                                 const currentInCart = activeProduct.weighed 
@@ -164,11 +136,11 @@ const Controlls = () => {
                                 navigation.navigate('cart')
                             }
                         }}
-                        background={isOutOfStock ? "#CCCCCC" : (inCart ? "#EEEEEE" : "#4FBD01")}
+                        background={inCart ? "#EEEEEE" : "#4FBD01"}
                         height={56}
                     >
-                        <Txt color={isOutOfStock ? "#666666" : (inCart ? "#4D4D4D" : "#fff")} weight='RobotoCondensed-Bold' size={18}>
-                            {isOutOfStock ? "Нет в наличии" : (inCart ? "В корзине" : "В корзину")}
+                        <Txt color={inCart ? "#4D4D4D" : "#fff"} weight='RobotoCondensed-Bold' size={18}>
+                            {inCart ? "В корзине" : "В корзину"}
                         </Txt>
                     </Button>
                 </View>
