@@ -83,10 +83,15 @@ export function ProductDTO(data: any) {
                     price = product.salePrices[0]?.value ? product.salePrices[0].value / 100 : 0;
                 }
                 
-                const imageHref = product?.images?.meta?.href || '';
+                let imageUrl = '';
+                if (product?.image?.meta?.downloadHref) {
+                    imageUrl = product.image.meta.downloadHref;
+                } else if (product?.images?.meta?.href) {
+                    imageUrl = product.images.meta.href;
+                }
                 
                 const formattedProduct = {
-                    image: imageHref,
+                    image: imageUrl,
                     price: price,
                     name: product?.name || 'Без названия',
                     id: product.id,

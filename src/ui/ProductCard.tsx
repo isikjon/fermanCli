@@ -21,7 +21,7 @@ interface Props {
 
 const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
-    const { getImage, setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
+    const { setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
     const { addItemToCart, cartList } = useCartStore()
     const { setMessage } = useNotificationStore()
     const [image, setImage] = useState<string | null>(null)
@@ -47,15 +47,11 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         setLocalAmount(amount)
     }, [amount])
     
-    const getImageUrl = useCallback(async () => {
-        if (!item.image) return
-        const imageMetadata = await getImage(item.image)
-        setImage(imageMetadata || null)
-    }, [item.image, getImage])
-
     useEffect(() => {
-        getImageUrl()
-    }, [getImageUrl])
+        if (item.image) {
+            setImage(item.image)
+        }
+    }, [item.image])
 
     const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
     const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
@@ -115,6 +111,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                             uri: image,
                             headers: { Authorization: MOYSKLAD_TOKEN },
                             priority: FastImage.priority.normal,
+                            cache: FastImage.cacheControl.immutable,
                         }}
                         resizeMode={FastImage.resizeMode.cover}
                     />

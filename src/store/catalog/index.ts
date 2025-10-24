@@ -105,7 +105,7 @@ const useCatalogStore = create<CachedState>()(
             },
 
             getProducts: async (catalogId) => {
-                const { activePage, category, productsCache, preloadImages } = get()
+                const { activePage, category, productsCache } = get()
                 const key = `${category || catalogId}_${activePage}`
                 
                 console.log('📦 [Store getProducts] catalogId:', catalogId, 'category:', category, 'activePage:', activePage, 'key:', key)
@@ -118,28 +118,19 @@ const useCatalogStore = create<CachedState>()(
                     return
                 }
 
-                if (productsCache[key] && productsCache[key].length === 0) {
-                    console.log('⚠️ [Store getProducts] Found empty cache, will reload from API')
-                }
-
                 try {
-                const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId)
+                    const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId)
                     
-                console.log('📦 [Store getProducts] API returned:', response.length, 'products')
-                
-                set((state) => ({
-                    productList: response,
-                    productsCache: response.length > 0 ? { ...state.productsCache, [key]: response } : state.productsCache,
-                    isLoading: false,
-                }))
-
-                    const imageLinks = response.map(p => p.image).filter(Boolean)
-                    setTimeout(() => {
-                        preloadImages(imageLinks)
-                    }, 100)
+                    console.log('📦 [Store getProducts] API returned:', response.length, 'products')
+                    
+                    set((state) => ({
+                        productList: response,
+                        productsCache: { ...state.productsCache, [key]: response },
+                        isLoading: false,
+                    }))
                 } catch (error) {
                     console.log('❌ [Store getProducts] error:', error)
-                    set({ isLoading: false })
+                    set({ isLoading: false, productList: [] })
                 }
             },
 
