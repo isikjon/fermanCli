@@ -75,7 +75,14 @@ const CatalogDetails = () => {
             case 'back':
                 return (
                     <View style={styles.BackBox}>
-                        <Back onClick={() => navigation.goBack()} />
+                        <Back onClick={() => {
+                            console.log('🔙 [catalogDetails] Back button clicked')
+                            if (navigation.canGoBack()) {
+                                navigation.goBack()
+                            } else {
+                                navigation.navigate('catalog' as never)
+                            }
+                        }} />
                     </View>
                 )
             case 'categories':
@@ -143,6 +150,8 @@ const styles = StyleSheet.create({
         paddingTop: 25,
         marginBottom: -20,
         paddingHorizontal: 15,
+        zIndex: 10,
+        elevation: 10,
     },
     FixedCategories: {
         position: 'absolute',

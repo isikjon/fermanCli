@@ -9,42 +9,26 @@ import { SafeRNFS } from '../../utils/safeRNFS';
 import CryptoJS from 'crypto-js';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 
-const AUTH = { Authorization: "Bearer b30482f83aebb45eca5c488774a23893c9e0e04e" }
-export const MOYSKLAD_TOKEN = "Bearer b30482f83aebb45eca5c488774a23893c9e0e04e"
-
-export async function getProductsCount(category: string): Promise<number> {
-    try {
-        console.log('🔢 [getProductsCount] Counting products for category:', category);
-        
-        const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=0`;
-
-        console.log('🌐 [getProductsCount] Request URL:', fullUrl);
-
-        const response = await axios.get(fullUrl, {
-            headers: AUTH,
-        });
-
-        const count = response.data.meta.size || 0;
-        console.log('✅ [getProductsCount] Result:', count);
-
-        return count;
-    } catch (error) {
-        console.log("❌ [getProductsCount] error:", error);
-        return 0;
-    }
-}
+const AUTH = { Authorization: "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2" }
+export const MOYSKLAD_TOKEN = "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2"
 
 export async function getProducts(offset: number, category: string) {
     try {
-        console.log('📦 [getProducts] Loading products:', { category, offset });
-        
         const { changeIsPagination } = useCatalogStore.getState();
+        const { deliveryData, addresses } = useDeliveryStore.getState();
+        const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
+        const zone = activeDelivery && getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng) || null;
+        const storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
 
+        const url = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";
+        const store = storeId ? `https://api.moysklad.ru/api/remap/1.2/entity/store/${storeId.store.id}` : null;
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
 
-        console.log('🌐 [getProducts] Request URL:', fullUrl);
+        const fullUrl = storeId
+            ? `${url}?filter=store=${store};productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`
+            : `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
+
+        console.log(fullUrl);
 
         changeIsPagination(false, 0);
         const response = await axios.get(fullUrl, {
@@ -54,18 +38,13 @@ export async function getProducts(offset: number, category: string) {
         const rows = response.data.rows;
         const size = response.data.meta.size;
 
-        console.log('✅ [getProducts] Response:', { rowsCount: rows?.length || 0, totalSize: size });
-
         if (size > 20) {
             changeIsPagination(true, size);
         }
 
-        const products = ProductDTO(rows.filter(Boolean));
-        console.log('📊 [getProducts] Processed products:', products.length);
-
-        return products;
+        return ProductDTO(rows.filter(Boolean));
     } catch (error) {
-        console.log("❌ [getProducts] error:", error);
+        console.log("getProducts error:", error);
         return [];
     }
 }
@@ -79,45 +58,13 @@ export async function getCategories() {
 }
 
 export async function getImage(link: string, isClear?: boolean) {
-    try {
-        console.log('🖼️ [getImage] Getting image URL for:', link)
-        
-        if (!link || link.trim() === '') {
-            console.log('⚠️ [getImage] Empty link provided')
-            return null
-        }
+    const metadata = await axios.get(link, {
+        headers: AUTH,
+    })
 
-        const metadata = await axios.get(link, {
-            headers: AUTH,
-        })
-
-        console.log('📡 [getImage] Metadata response:', JSON.stringify(metadata.data, null, 2))
-
-        // Проверяем разные возможные структуры ответа
-        if (metadata.data.rows && metadata.data.rows.length > 0) {
-            const downloadHref = metadata.data.rows[0].meta.downloadHref
-            console.log('✅ [getImage] Found download URL in rows:', downloadHref)
-            return downloadHref
-        }
-        
-        // Проверяем, если данные в другом формате
-        if (metadata.data.meta && metadata.data.meta.downloadHref) {
-            console.log('✅ [getImage] Found download URL in meta:', metadata.data.meta.downloadHref)
-            return metadata.data.meta.downloadHref
-        }
-        
-        // Проверяем, если это прямая ссылка на изображение
-        if (metadata.data && typeof metadata.data === 'string' && metadata.data.includes('download')) {
-            console.log('✅ [getImage] Found direct download URL:', metadata.data)
-            return metadata.data
-        }
-        
-        console.log('❌ [getImage] No valid image data found in response structure')
-        return null
-    } catch (error) {
-        console.log('❌ [getImage] ERROR:', error)
-        return null
-    }
+    return isClear
+        ? metadata.data.rows[0].meta.downloadHref
+        : metadata.data.rows[0].miniature.downloadHref
 }
 
 const activeDownloads = new Map<string, Promise<string | null>>();

@@ -20,13 +20,11 @@ const List = () => {
     catalogList,
     productList,
     getProducts,
-    getProductsCount,
     isLoading,
     isPagination,
     pages,
     activePage,
     changePage,
-    productsCount,
   } = useCatalogStore();
   const route = useRoute<RouteProp<RootStackParamList, 'List'>>();
   const { id } = route.params;
@@ -34,14 +32,12 @@ const List = () => {
   const activeCatalogItem = catalogList.find((i) => i.id === id);
   const activeCategory = activeCatalogItem?.subCategory?.find((i) => i.id === category);
 
-  // Calculate item width for ProductCard
   const screenWidth = Dimensions.get('window').width;
   const ITEM_HORIZONTAL_PADDING = 16 * 2;
   const GAP = 24;
   const NUM_COLUMNS = 2;
   const itemWidth = (screenWidth - ITEM_HORIZONTAL_PADDING - GAP) / NUM_COLUMNS;
 
-  // Define getItemLayout (adjust height based on ProductCard)
   const isMounted = useRef(true)
   const abortController = useRef<AbortController | null>(null)
   const titleRef = useRef<View>(null)
@@ -81,20 +77,8 @@ const List = () => {
           
           performanceMonitor.logInteraction('Load Products', 'List')
           
-          const countPromise = getProductsCount(id)
-          const productsPromise = getProducts(id)
-          
           await Promise.race([
-            countPromise,
-            new Promise((_, reject) => {
-              controller.signal.addEventListener('abort', () => reject(new Error('Aborted')))
-            })
-          ])
-
-          if (!isMounted.current || controller.signal.aborted) return
-
-          await Promise.race([
-            productsPromise,
+            getProducts(id),
             new Promise((_, reject) => {
               controller.signal.addEventListener('abort', () => reject(new Error('Aborted')))
             })
@@ -169,9 +153,6 @@ const List = () => {
               </Txt>
               <Txt size={14} color="#666" style={{ marginTop: 8, textAlign: 'center' }}>
                 Попробуйте выбрать другую категорию или вернитесь позже
-              </Txt>
-              <Txt size={12} color="#999" style={{ marginTop: 16 }}>
-                Debug: productList.length={productList.length}, productsCount={productsCount}
               </Txt>
             </View>
           )}

@@ -9,9 +9,14 @@ interface Props {
 
 const Back: FC<Props> = ({ onClick }) => {
     return (
-        <TouchableOpacity style={styles.BackButton} onPress={onClick} activeOpacity={0.5}>
+        <TouchableOpacity 
+            style={styles.BackButton} 
+            onPress={onClick} 
+            activeOpacity={0.5}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
             <Icons.ArrowRight style={styles.BackIcon} />
-            <Txt color='#4D4D4D' weight='Bold' size={18}>Назад</Txt>
+            <Txt color='#4D4D4D' weight='RobotoCondensed-Bold' size={18}>Назад</Txt>
         </TouchableOpacity>
     )
 }

@@ -2,7 +2,7 @@ import { orderPayload } from "../../functions";
 import { IOrder } from "../../types";
 import axios from "axios";
 
-const AUTH = { Authorization: "Bearer b30482f83aebb45eca5c488774a23893c9e0e04e" }
+const AUTH = { Authorization: "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2" }
 
 export const createCustomer = async (name: string, phone: string) => {
     console.log('👤 [API createCustomer] Creating customer:', { name, phone })

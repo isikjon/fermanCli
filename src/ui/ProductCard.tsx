@@ -1,6 +1,5 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View, Image } from 'react-native'
 import React, { FC, useCallback, useEffect, useState, useMemo } from 'react'
-import FastImage from 'react-native-fast-image'
 import Empty from '../assets/svg/Empty'
 import Txt from './Text'
 import Counter from './Counter'
@@ -12,7 +11,6 @@ import useNotificationStore from '../store/notification'
 import { useNavigation } from '@react-navigation/native'
 import { performanceMonitor } from '../utils/performanceMonitor'
 import { formatPrice } from '../functions'
-import { MOYSKLAD_TOKEN } from '../api/functions/products'
 
 interface Props {
     item: ProductType
@@ -21,7 +19,7 @@ interface Props {
 
 const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
-    const { setSelectedAmount, getSelectedAmount, clearSelectedAmount } = useCatalogStore()
+    const { setSelectedAmount, getSelectedAmount, clearSelectedAmount, getImage } = useCatalogStore()
     const { addItemToCart, cartList } = useCartStore()
     const { setMessage } = useNotificationStore()
     const [image, setImage] = useState<string | null>(null)
@@ -47,11 +45,16 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         setLocalAmount(amount)
     }, [amount])
     
-    useEffect(() => {
+    const getImageUrl = useCallback(async () => {
         if (item.image) {
-            setImage(item.image)
+            const imageMetadata = await getImage(item.image)
+            setImage(imageMetadata || null)
         }
-    }, [item.image])
+    }, [item.image, getImage])
+
+    useEffect(() => {
+        getImageUrl()
+    }, [getImageUrl])
 
     const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
     const totalPrice = useMemo(() => formatPrice(localAmount * item.price), [localAmount, item.price])
@@ -105,16 +108,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         >
             <View style={styles.Content}>
                 {image ? (
-                    <FastImage 
-                        style={styles.Image} 
-                        source={{ 
-                            uri: image,
-                            headers: { Authorization: MOYSKLAD_TOKEN },
-                            priority: FastImage.priority.normal,
-                            cache: FastImage.cacheControl.immutable,
-                        }}
-                        resizeMode={FastImage.resizeMode.cover}
-                    />
+                    <Image style={styles.Image} source={{ uri: image }} />
                 ) : (
                     <View style={styles.Empty}><Empty /></View>
                 )}

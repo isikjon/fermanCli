@@ -1,6 +1,5 @@
-import { Dimensions, StyleSheet, View } from 'react-native'
+import { Dimensions, StyleSheet, View, Image } from 'react-native'
 import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
-import FastImage from 'react-native-fast-image'
 import RoundButton from '../../../ui/RoundButton'
 import Icons from '../../../ui/Icons'
 import Empty from '../../../assets/svg/Empty'
@@ -8,7 +7,6 @@ import useCatalogStore from '../../../store/catalog'
 import useFavoriteStore from '../../../store/favorite'
 import { IFavorite } from '../../../types'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
-import { MOYSKLAD_TOKEN } from '../../../api/functions/products'
 
 const Preview = () => {
     const { activeProduct, activeProductImage, getImage } = useCatalogStore()
@@ -77,21 +75,17 @@ const Preview = () => {
 
     return (
         <View style={styles.Preview}>
-{activeProduct && image ? (
-    <FastImage
-        style={styles.Image}
-        source={{
-            uri: image,
-            headers: { Authorization: MOYSKLAD_TOKEN },
-            priority: FastImage.priority.high,
-        }}
-        resizeMode={FastImage.resizeMode.cover}
-    />
-) : (
-    <View style={styles.Empty}>
-        <Empty width={200} height={200} />
-    </View>
-)}
+            {activeProduct && image ? (
+                <Image
+                    style={styles.Image}
+                    source={{ uri: image }}
+                    resizeMode="cover"
+                />
+            ) : (
+                <View style={styles.Empty}>
+                    <Empty width={200} height={200} />
+                </View>
+            )}
 
             <View style={styles.Top} pointerEvents="box-none">
                 <RoundButton onClick={() => navigation.goBack()}>
