@@ -1,5 +1,5 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import React, { FC } from 'react'
+import React, { FC, useCallback, useMemo, memo } from 'react'
 import Icons from './Icons'
 import Txt from './Text'
 import useNotificationStore from '../store/notification'
@@ -27,17 +27,22 @@ const Counter: FC<Props> = ({
                                 sign,
                                 max
                             }) => {
-    const { setMessage } = useNotificationStore()
-    const isMinusDisabled = amount <= min
-    const isPlusDisabled = typeof max === 'number' ? amount >= max : false
+    const setMessage = useNotificationStore(state => state.setMessage)
+    
+    // Мемоизируем вычисления
+    const isMinusDisabled = useMemo(() => amount <= min, [amount, min])
+    const isPlusDisabled = useMemo(() => 
+        typeof max === 'number' ? amount >= max : false, 
+        [amount, max]
+    )
 
-    const handleDecrease = () => {
+    const handleDecrease = useCallback(() => {
         if (amount - step >= min) {
             onChange(Number((amount - step).toFixed(2)))
         }
-    }
+    }, [amount, step, min, onChange])
 
-    const handleIncrease = () => {
+    const handleIncrease = useCallback(() => {
         const next = Number((amount + step).toFixed(2))
         if (typeof max === 'number' && next > max) {
             setMessage('На складе больше товара нет', 'error')
@@ -45,9 +50,19 @@ const Counter: FC<Props> = ({
             return
         }
         onChange(next)
-    }
+    }, [amount, step, max, onChange, setMessage])
 
-    const valueFontSize = isLarger ? 24 : isSmall ? 16 : (step < 1 ? 18 : 20)
+    const valueFontSize = useMemo(() => 
+        isLarger ? 24 : isSmall ? 16 : (step < 1 ? 18 : 20),
+        [isLarger, isSmall, step]
+    )
+    
+    const displayValue = useMemo(() => 
+        `${step < 1 ? amount.toFixed(1) : amount} ${sign || ''}`.trim(),
+        [amount, step, sign]
+    )
+    
+    const iconSize = useMemo(() => isLarger ? 16 : 10, [isLarger])
 
     return (
         <View style={[styles.Counter, isNotFull && styles.IsNotFull, isSmall && styles.SmallCounter]}>
@@ -63,14 +78,14 @@ const Counter: FC<Props> = ({
                 disabled={isMinusDisabled}
             >
                 <Icons.Minus
-                    width={isLarger ? 16 : 10}
-                    height={isLarger ? 16 : 10}
+                    width={iconSize}
+                    height={iconSize}
                     color={isMinusDisabled ? "#4D4D4D" : "#fff"}
                 />
             </TouchableOpacity>
 
-            <Txt size={valueFontSize} weight={isSmall ? "Regular" : 'Bold'}>
-                {step < 1 ? amount.toFixed(1) : amount} {sign}
+            <Txt size={valueFontSize} weight={isSmall ? "RobotoCondensed-Regular" : 'RobotoCondensed-Bold'}>
+                {displayValue}
             </Txt>
 
             <TouchableOpacity
@@ -80,8 +95,8 @@ const Counter: FC<Props> = ({
                 disabled={isPlusDisabled}
             >
                 <Icons.Plus
-                    width={isLarger ? 16 : 10}
-                    height={isLarger ? 16 : 10}
+                    width={iconSize}
+                    height={iconSize}
                     color={isPlusDisabled ? "#4D4D4D" : "#fff"}
                 />
             </TouchableOpacity>
@@ -89,7 +104,20 @@ const Counter: FC<Props> = ({
     )
 }
 
-export default Counter
+Counter.displayName = 'Counter'
+
+// Мемоизируем для предотвращения лишних ре-рендеров
+export default memo(Counter, (prevProps, nextProps) => {
+    return (
+        prevProps.amount === nextProps.amount &&
+        prevProps.step === nextProps.step &&
+        prevProps.max === nextProps.max &&
+        prevProps.min === nextProps.min &&
+        prevProps.isLarger === nextProps.isLarger &&
+        prevProps.isSmall === nextProps.isSmall &&
+        prevProps.sign === nextProps.sign
+    )
+})
 
 const styles = StyleSheet.create({
     Counter: {

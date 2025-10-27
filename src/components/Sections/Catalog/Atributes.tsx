@@ -35,20 +35,11 @@ const List = () => {
   const itemWidth = (screenWidth - 32 - 24) / 2;
 
   useEffect(() => {
-    console.log('useEffect fired: id=', id, 'activePage=', activePage);  // Лог: Когда эффект запускается и с какими deps
     if (!id) {
-      console.log('Skipping fetch: id is undefined or null');  // Лог: Если id bad, не fetch
       return;
     }
     getDataFromAtributes(id);
-    console.log('Fetch called: getDataFromAtributes with id=', id);  // Лог: Подтверждение вызова fetch
   }, [id, activePage]);
-
-  useEffect(() => {
-    console.log('Store state updated: productWithAtrList.length=', productWithAtrList?.length || 0, 'isLoading=', isLoading);  // Лог: После любого изменения стора (deps на state)
-  }, [productWithAtrList, isLoading]);
-
-  console.log('Component render: data length=', productWithAtrList?.length || 0, 'isLoading=', isLoading);  // Лог: При каждом re-render компонента
 
   return (
     <View style={styles.Container}>

@@ -5,9 +5,6 @@ import axios from "axios"
 import { getZoneForLocation } from "../../functions";
 import useDeliveryStore from "../../store/delivery";
 import { deliveryDataObj } from "../../constants/delivery";
-import { SafeRNFS } from '../../utils/safeRNFS';
-import CryptoJS from 'crypto-js';
-import ImageResizer from '@bam.tech/react-native-image-resizer';
 
 const AUTH = { Authorization: "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2" }
 export const MOYSKLAD_TOKEN = "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2"
@@ -57,154 +54,14 @@ export async function getCategories() {
     return CategoryDTO(response.data.rows)
 }
 
-export async function getImage(link: string, isClear?: boolean) {
-    const metadata = await axios.get(link, {
-        headers: AUTH,
-    })
+/**
+ * Получить CDN URL изображения по ID товара
+ * Теперь просто возвращает прямой CDN URL вместо загрузки из МойСклад
+ */
+import { getCDNImageUrl } from "../../config/cdnMapping"
 
-    return isClear
-        ? metadata.data.rows[0].meta.downloadHref
-        : metadata.data.rows[0].miniature.downloadHref
-}
-
-const activeDownloads = new Map<string, Promise<string | null>>();
-
-export async function downloadImage(link: string) {
-    try {
-        console.log('⬇️ [downloadImage] Starting download for:', link)
-        
-        if (!link || link.trim() === '') {
-            console.log('⚠️ [downloadImage] Empty link provided')
-            return null;
-        }
-
-        if (activeDownloads.has(link)) {
-            console.log('⏳ [downloadImage] Download already in progress, waiting...')
-            return await activeDownloads.get(link);
-        }
-
-        const downloadPromise = performDownload(link);
-        activeDownloads.set(link, downloadPromise);
-
-        try {
-            const result = await downloadPromise;
-            console.log('✅ [downloadImage] Download completed:', result ? 'SUCCESS' : 'FAILED')
-            return result;
-        } finally {
-            activeDownloads.delete(link);
-        }
-    } catch (error) {
-        console.log('❌ [downloadImage] ERROR:', error);
-        return null;
-    }
-}
-
-async function performDownload(link: string): Promise<string | null> {
-    let tempUri: string | null = null;
-    
-    try {
-        console.log('🔄 [performDownload] Starting download process for:', link)
-        
-        const hash = CryptoJS.SHA256(link).toString();
-        const cacheDir = SafeRNFS.CachesDirectoryPath;
-        
-        console.log('📁 [performDownload] Cache directory:', cacheDir)
-        
-        if (!cacheDir || cacheDir.trim() === '') {
-            console.log('⚠️ [performDownload] Cache directory not available');
-            return null;
-        }
-
-        const compressedUri = `${cacheDir}/${hash}_compressed.jpg`;
-        const fileUri = `file://${compressedUri}`;
-
-        console.log('🔍 [performDownload] Checking if file exists:', compressedUri)
-        const fileExists = await SafeRNFS.exists(compressedUri);
-        if (fileExists) {
-            console.log('✅ [performDownload] File already exists, returning cached version')
-            return fileUri;
-        }
-
-        tempUri = `${cacheDir}/${hash}_temp.jpg`;
-        
-        console.log('⬇️ [performDownload] Starting file download to:', tempUri)
-        
-        const downloadPromise = SafeRNFS.downloadFile({
-            fromUrl: link,
-            toFile: tempUri,
-            headers: AUTH,
-            readTimeout: 30000,
-            connectionTimeout: 30000,
-        });
-
-        const downloadResult = await Promise.race([
-            downloadPromise.promise,
-            new Promise<any>((_, reject) => 
-                setTimeout(() => reject(new Error('Download timeout')), 30000)
-            )
-        ]);
-
-        console.log('📥 [performDownload] Download result:', downloadResult)
-
-        // Проверяем статус загрузки
-        if (downloadResult && downloadResult.statusCode === 200) {
-            console.log('✅ [performDownload] Download successful')
-        } else {
-            console.log('❌ [performDownload] Download failed, status:', downloadResult?.statusCode)
-            throw new Error(`Download failed with status: ${downloadResult?.statusCode || 'unknown'}`);
-        }
-
-        const tempFileExists = await SafeRNFS.exists(tempUri);
-        if (!tempFileExists) {
-            console.log('❌ [performDownload] Downloaded file not found at:', tempUri)
-            throw new Error('Downloaded file not found');
-        }
-        
-        console.log('✅ [performDownload] File downloaded successfully, starting resize...')
-
-        const resizedImage = await ImageResizer.createResizedImage(
-            tempUri,
-            600,
-            600,
-            'JPEG',
-            70,
-            0,
-            undefined,
-            false,
-            { mode: 'contain', onlyScaleDown: true }
-        );
-
-        console.log('🖼️ [performDownload] Image resize result:', resizedImage)
-
-        if (!resizedImage || !resizedImage.uri) {
-            console.log('❌ [performDownload] Image resize failed')
-            throw new Error('Image resize failed');
-        }
-
-        const resizedPath = resizedImage.uri.replace('file://', '');
-        
-        console.log('📁 [performDownload] Moving resized image from:', resizedPath, 'to:', compressedUri)
-        
-        try {
-            await SafeRNFS.moveFile(resizedPath, compressedUri);
-            console.log('✅ [performDownload] Image processing completed successfully')
-        } catch (moveError) {
-            console.log('⚠️ [performDownload] Move failed, trying copy:', moveError);
-            await SafeRNFS.copyFile(resizedPath, compressedUri);
-            await SafeRNFS.unlink(resizedPath);
-            console.log('✅ [performDownload] Image processing completed via copy')
-        }
-
-        return fileUri;
-    } catch (error) {
-        console.log('❌ [performDownload] ERROR:', error);
-        return null;
-    } finally {
-        if (tempUri) {
-            console.log('🧹 [performDownload] Cleaning up temp file:', tempUri)
-            await SafeRNFS.unlink(tempUri);
-        }
-    }
+export function getImage(productId: string, index: number = 0): string {
+    return getCDNImageUrl(productId, index)
 }
 
 export async function searchProduct(name: string) {

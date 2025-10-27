@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native'
-import React from 'react'
+import React, { useRef, useCallback } from 'react'
 import Row from '../../Row'
 import TouchBox from '../../TouchBox'
 import { categoriesList } from '../../../constants'
@@ -8,11 +8,23 @@ import Txt from '../../../ui/Text'
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../RootLayout';
+import useCatalogStore from '../../../store/catalog';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Categories = () => {
     const navigation = useNavigation<NavigationProp>();
+    const { isLoading } = useCatalogStore();
+    const lastClickTime = useRef(0);
+
+    const handleClick = useCallback((id: string) => {
+        const now = Date.now();
+        if (isLoading || now - lastClickTime.current < 1000) {
+            return;
+        }
+        lastClickTime.current = now;
+        navigation.navigate('atributes', { id });
+    }, [isLoading, navigation]);
 
     return (
         <View style={styles.Categories}>
@@ -23,10 +35,7 @@ const Categories = () => {
                         height={62}
                         isFull
                         key={index}
-                        onClick={() => {
-                            console.log('🖱️ [Categories] CLICKED', item.name, 'at', performance.now())
-                            navigation.navigate('atributes', { id: item.id })
-                        }}
+                        onClick={() => handleClick(item.id)}
                     >
                         <View style={styles.Box}>
                             <item.icon />
@@ -43,10 +52,7 @@ const Categories = () => {
                         height={62}
                         isFull
                         key={index}
-                        onClick={() => {
-                            console.log('🖱️ [Categories] CLICKED', item.name, 'at', performance.now())
-                            navigation.navigate('atributes', { id: item.id })
-                        }}
+                        onClick={() => handleClick(item.id)}
                     >
                         <View style={styles.Box}>
                             <item.icon />

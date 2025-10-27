@@ -57,8 +57,8 @@ export interface CachedState {
     clearSelectedAmount: (productId: string) => void
     getCategories: () => Promise<void>
     getProducts: (catalogId: string) => Promise<void>
-    getImage: (link: string, isClear?: boolean) => Promise<any>
-    preloadImages: (links: string[]) => Promise<void>
+    getImage: (productId: string, index?: number) => string
+    preloadImages: (productIds: string[]) => Promise<void>
     searchProduct: () => Promise<void>
     searchProductByName: (name: string) => Promise<void>
     getProduct: (id: string) => Promise<void>

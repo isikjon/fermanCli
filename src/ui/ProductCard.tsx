@@ -1,14 +1,13 @@
-import { StyleSheet, TouchableOpacity, View, Image } from 'react-native'
-import React, { FC, useCallback, useEffect, useState } from 'react'
-import Empty from '../assets/svg/Empty'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useState, useMemo, memo } from 'react'
 import Txt from './Text'
 import Counter from './Counter'
 import Button from './Button'
 import { ProductType } from '../types'
-import useCatalogStore from '../store/catalog'
 import useCartStore from '../store/cart'
 import { useNavigation } from '@react-navigation/native'
 import { formatPrice } from '../functions'
+import OptimizedImage from './OptimizedImage'
 
 interface Props {
     item: ProductType
@@ -17,36 +16,40 @@ interface Props {
 
 const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
-    const { getImage } = useCatalogStore()
-    const [amount, setAmount] = useState(item.weighed ? 0.1 : 1)
-    const [image, setImage] = useState<string | null>(null)
-    const { addItemToCart, cartList } = useCartStore()
-    const [inCart, setInCart] = useState(false)
+    const addItemToCart = useCartStore(state => state.addItemToCart)
+    const cartList = useCartStore(state => state.cartList)
     
-    const getImageUrl = useCallback(async () => {
-        if (item.image) {
-            const imageMetadata = await getImage(item.image)
-            setImage(imageMetadata || null)
+    const cartItem = useMemo(() => 
+        cartList.find(i => i.id === item.id), 
+        [cartList, item.id]
+    )
+    
+    const inCart = !!cartItem
+    const initialAmount = useMemo(() => {
+        if (cartItem) {
+            return item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
         }
-    }, [item.image, getImage])
+        return item.weighed ? 0.1 : 1
+    }, [cartItem, item.weighed])
+    
+    const [amount, setAmount] = useState(initialAmount)
 
-    const checkInCart = useCallback(() => {
-        const data = cartList.find(i => i.id === item.id)
-        if (data) {
-            setAmount(item.weighed && data.weight !== undefined ? data.weight : data.amount)
-            setInCart(true)
-        } else {
-            setInCart(false)
-        }
-    }, [cartList, item.id, item.weighed])
-
+    // Синхронизируем amount с корзиной
     useEffect(() => {
-        getImageUrl()
-        checkInCart()
-    }, [getImageUrl, checkInCart])
+        if (cartItem) {
+            const newAmount = item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
+            setAmount(newAmount)
+        }
+    }, [cartItem, item.weighed])
 
-    const step = item.weighed ? 0.1 : 1
-    const totalPrice = formatPrice(amount * item.price)
+    // Мемоизируем вычисления
+    const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
+    const totalPrice = useMemo(() => formatPrice(amount * item.price), [amount, item.price])
+    const priceText = useMemo(() => 
+        `${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`, 
+        [item.price, item.weighed]
+    )
+    const totalPriceText = useMemo(() => `Итого: ${totalPrice} ₽`, [totalPrice])
 
     const handleAddToCart = useCallback(() => {
         if (!inCart) {
@@ -73,6 +76,10 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const handleProductPress = useCallback(() => {
         navigation.navigate('product' as never, { id: item.id } as never)
     }, [item.id, navigation])
+    
+    const handleAmountChange = useCallback((value: number) => {
+        setAmount(Number(value.toFixed(2)))
+    }, [])
 
     return (
         <TouchableOpacity
@@ -81,19 +88,21 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             onPress={handleProductPress}
         >
             <View style={styles.Content}>
-                {image ? (
-                    <Image style={styles.Image} source={{ uri: image }} />
-                ) : (
-                    <View style={styles.Empty}><Empty /></View>
-                )}
+                <OptimizedImage
+                    productId={item.id}
+                    index={0}
+                    style={styles.Image}
+                    resizeMode="cover"
+                    emptyStyle={styles.Empty}
+                />
 
                 <View style={styles.Info}>
-                    <Txt>{item.name}</Txt>
+                    <Txt numberOfLines={2}>{item.name}</Txt>
                     <Txt weight='RobotoCondensed-Bold'>
-                        {`${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`}
+                        {priceText}
                     </Txt>
                     <Txt size={14} color="#666">
-                        Итого: {totalPrice} ₽
+                        {totalPriceText}
                     </Txt>
                 </View>
             </View>
@@ -103,7 +112,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                     <Counter
                         amount={amount}
                         step={step}
-                        onChange={value => setAmount(Number(value.toFixed(2)))}
+                        onChange={handleAmountChange}
                         sign={item.weighed ? "кг" : ""}
                         max={item.stock}
                         isSmall
@@ -125,7 +134,15 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
 ProductCard.displayName = 'ProductCard'
 
-export default ProductCard
+// Мемоизируем компонент для предотвращения лишних ре-рендеров
+export default memo(ProductCard, (prevProps, nextProps) => {
+    return (
+        prevProps.item.id === nextProps.item.id &&
+        prevProps.item.price === nextProps.item.price &&
+        prevProps.item.stock === nextProps.item.stock &&
+        prevProps.width === nextProps.width
+    )
+})
 
 const styles = StyleSheet.create({
     Item: {
@@ -147,11 +164,6 @@ const styles = StyleSheet.create({
     Empty: {
         height: 150,
         width: "100%",
-        borderWidth: 1,
-        borderColor: "#4FBD01",
-        borderRadius: 16,
-        alignItems: "center",
-        justifyContent: "center"
     },
     Info: {
         marginTop: 16,

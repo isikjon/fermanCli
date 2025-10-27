@@ -1,21 +1,20 @@
-import { Dimensions, StyleSheet, View, Image } from 'react-native'
-import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react'
+import { Dimensions, StyleSheet, View } from 'react-native'
+import React, { useCallback, useEffect, useRef, useMemo } from 'react'
 import RoundButton from '../../../ui/RoundButton'
 import Icons from '../../../ui/Icons'
-import Empty from '../../../assets/svg/Empty'
 import useCatalogStore from '../../../store/catalog'
 import useFavoriteStore from '../../../store/favorite'
 import { IFavorite } from '../../../types'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
+import OptimizedImage from '../../../ui/OptimizedImage'
 
 const Preview = () => {
-    const { activeProduct, activeProductImage, getImage } = useCatalogStore()
+    const { activeProduct } = useCatalogStore()
     const { addItemToFav, removeItemFromFav, getFavoriteList, favoriteList } = useFavoriteStore()
 
     const navigation = useNavigation()
     const route = useRoute<any>()
     const productId = route.params?.id
-    const [image, setImage] = useState<string | null>(null)
     const isMounted = useRef(true)
     
     const isExist = useMemo(() => {
@@ -23,14 +22,6 @@ const Preview = () => {
         console.log('Проверка избранного для товара:', productId, 'Результат:', exists, 'Список:', favoriteList.length)
         return exists
     }, [favoriteList, productId])
-
-    const getImageUrl = useCallback(async () => {
-        if (!activeProduct?.image) return
-        const imageMetadata = await getImage(activeProduct.image, false)
-        if (isMounted.current) {
-            setImage(imageMetadata || null)
-        }
-    }, [activeProduct?.image, getImage])
 
     const handleLike = useCallback(() => {
         if (!activeProduct) return
@@ -67,24 +58,18 @@ const Preview = () => {
         }
     }, [])
 
-    useEffect(() => {
-        if (activeProduct?.image) {
-            getImageUrl()
-        }
-    }, [activeProduct?.image, getImageUrl])
-
     return (
         <View style={styles.Preview}>
-            {activeProduct && image ? (
-                <Image
+            {activeProduct ? (
+                <OptimizedImage
+                    productId={activeProduct.id}
+                    index={0}
                     style={styles.Image}
-                    source={{ uri: image }}
                     resizeMode="cover"
+                    emptyStyle={styles.Empty}
                 />
             ) : (
-                <View style={styles.Empty}>
-                    <Empty width={200} height={200} />
-                </View>
+                <View style={styles.Empty} />
             )}
 
             <View style={styles.Top} pointerEvents="box-none">

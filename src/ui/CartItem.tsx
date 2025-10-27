@@ -1,15 +1,14 @@
-import { StyleSheet, TouchableOpacity, View, Image } from 'react-native'
-import React, { FC, useCallback, useEffect, useState } from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { FC, useCallback, useEffect, useState, useMemo, memo } from 'react'
 import Txt from '../ui/Text'
 import Counter from '../ui/Counter'
 import Icons from '../ui/Icons'
 import Row from '../components/Row'
 import { CartType } from '../types'
-import useCatalogStore from '../store/catalog'
-import Empty from '../assets/svg/Empty'
 import useCartStore from '../store/cart'
 import { useNavigation } from '@react-navigation/native'
 import { formatPrice } from '../functions'
+import OptimizedImage from './OptimizedImage'
 
 interface Props {
     item: CartType
@@ -17,9 +16,9 @@ interface Props {
 
 const CartItem: FC<Props> = ({ item }) => {
     const navigation = useNavigation()
-    const { getImage } = useCatalogStore()
-    const [image, setImage] = useState<string | null>(null)
-    const { removeItemFromCart, changeCartItem } = useCartStore()
+    const removeItemFromCart = useCartStore(state => state.removeItemFromCart)
+    const changeCartItem = useCartStore(state => state.changeCartItem)
+    
     const [amount, setAmount] = useState(item.amount)
     const [weight, setWeight] = useState(item.weight || 0.1)
     
@@ -28,43 +27,73 @@ const CartItem: FC<Props> = ({ item }) => {
         setWeight(item.weight || 0.1)
     }, [item.amount, item.weight])
     
-    const displayAmount = item.isWeighted ? weight : amount
-    const step = item.isWeighted ? 0.1 : 1
-    const price = item.isWeighted ? item.price * weight : item.price * amount
+    const displayAmount = useMemo(() => 
+        item.isWeighted ? weight : amount,
+        [item.isWeighted, weight, amount]
+    )
+    
+    const step = useMemo(() => item.isWeighted ? 0.1 : 1, [item.isWeighted])
+    const price = useMemo(() => 
+        item.isWeighted ? item.price * weight : item.price * amount,
+        [item.isWeighted, item.price, weight, amount]
+    )
+    
+    const priceDisplay = useMemo(() => 
+        `${formatPrice(price)} руб.`,
+        [price]
+    )
+    
+    const detailText = useMemo(() => {
+        if (item.isWeighted) {
+            return `${weight.toFixed(1)}кг x ${formatPrice(item.price)}/кг = ${formatPrice(price)} руб.`
+        }
+        return `${amount}шт x ${formatPrice(item.price)} = ${formatPrice(price)} руб.`
+    }, [item.isWeighted, weight, amount, item.price, price])
+    
+    const handleProductPress = useCallback(() => {
+        navigation.navigate('product' as never, { id: item.id } as never)
+    }, [item.id, navigation])
+    
+    const handleRemove = useCallback(() => {
+        removeItemFromCart(item.id)
+    }, [item.id, removeItemFromCart])
 
-    const getImageUrl = useCallback(async () => {
-        const imageMetadata = await getImage(item.image)
-        setImage(imageMetadata || null)
-    }, [item])
-
-    useEffect(() => {
-        getImageUrl()
-    }, [getImageUrl])
+    const handleCounterChange = useCallback((value: number) => {
+        if (item.isWeighted) {
+            setWeight(value)
+            changeCartItem(item.id, { ...item, weight: value })
+        } else {
+            setAmount(value)
+            changeCartItem(item.id, { ...item, amount: value })
+        }
+    }, [item, changeCartItem])
 
     return (
         <View style={styles.CartItem}>
             <Row gap={24}>
                 <TouchableOpacity
-                    style={{ flex: 1 }}
-                    onPress={() => navigation.navigate('product' as never, { id: item.id } as never)}
+                    style={styles.TouchArea}
+                    onPress={handleProductPress}
                     activeOpacity={0.5}
                 >
                     <Row>
-                        {image ? (
-                            <Image style={styles.Image} source={{ uri: image }} />
-                        ) : (
-                            <View style={styles.Empty}><Empty width={40} height={40} /></View>
-                        )}
+                        <OptimizedImage
+                            productId={item.id}
+                            index={0}
+                            style={styles.Image}
+                            resizeMode="cover"
+                            emptyStyle={styles.Empty}
+                        />
 
                         <View style={styles.Title}>
-                            <Txt weight='RobotoCondensed-Bold' size={16} lines={3}>{item.name}</Txt>
+                            <Txt weight='RobotoCondensed-Bold' size={16} numberOfLines={3}>{item.name}</Txt>
                             {item.isWeighted ? (
                                 <>
                                     <Txt>{weight.toFixed(1)} кг</Txt>
-                                    <Txt>{`${weight.toFixed(1)}кг x ${formatPrice(item.price)}/кг = ${formatPrice(price)} руб.`}</Txt>
+                                    <Txt>{detailText}</Txt>
                                 </>
                             ) : (
-                                <Txt>{`${amount}шт x ${formatPrice(item.price)} = ${formatPrice(price)} руб.`}</Txt>
+                                <Txt>{detailText}</Txt>
                             )}
                         </View>
                     </Row>
@@ -72,15 +101,7 @@ const CartItem: FC<Props> = ({ item }) => {
 
                 <Counter
                     amount={displayAmount}
-                    onChange={value => {
-                        if (item.isWeighted) {
-                            setWeight(value)
-                            changeCartItem(item.id, { ...item, weight: value })
-                        } else {
-                            setAmount(value)
-                            changeCartItem(item.id, { ...item, amount: value })
-                        }
-                    }}
+                    onChange={handleCounterChange}
                     step={step}
                     min={item.isWeighted ? 0.1 : 1}
                     max={item.stock}
@@ -91,8 +112,8 @@ const CartItem: FC<Props> = ({ item }) => {
             </Row>
 
             <Row>
-                <Txt size={28} weight='RobotoCondensed-Bold'>{`${formatPrice(price)} руб.`}</Txt>
-                <TouchableOpacity activeOpacity={0.5} onPress={() => removeItemFromCart(item.id)}>
+                <Txt size={28} weight='RobotoCondensed-Bold'>{priceDisplay}</Txt>
+                <TouchableOpacity activeOpacity={0.5} onPress={handleRemove}>
                     <Icons.Trash />
                 </TouchableOpacity>
             </Row>
@@ -100,7 +121,14 @@ const CartItem: FC<Props> = ({ item }) => {
     )
 }
 
-export default CartItem
+CartItem.displayName = 'CartItem'
+
+export default memo(CartItem, (prevProps, nextProps) => {
+    return prevProps.item.id === nextProps.item.id &&
+           prevProps.item.amount === nextProps.item.amount &&
+           prevProps.item.weight === nextProps.item.weight &&
+           prevProps.item.price === nextProps.item.price
+})
 
 const styles = StyleSheet.create({
     CartItem: {
@@ -110,11 +138,13 @@ const styles = StyleSheet.create({
         borderBottomColor: "#15151526",
         borderBottomWidth: 1
     },
+    TouchArea: {
+        flex: 1
+    },
     Image: {
         width: 75,
         height: 75,
         borderRadius: 12,
-        resizeMode: "cover",
     },
     Empty: {
         width: 75,

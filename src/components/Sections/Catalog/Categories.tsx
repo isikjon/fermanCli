@@ -1,32 +1,48 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useMemo, memo, useCallback, useRef } from 'react'
 import Txt from '../../../ui/Text'
 import useCatalogStore from '../../../store/catalog'
 import { useRoute, RouteProp } from '@react-navigation/native'
 import { filteredCategories } from '../../../constants'
 
-// Определяем типы для роутов
 type RootStackParamList = {
     Categories: { id: string }
 }
 
-const Categories = () => {
-    const { changeCategory, catalogList, category } = useCatalogStore()
+const Categories = memo(() => {
+    const changeCategory = useCatalogStore(state => state.changeCategory)
+    const catalogList = useCatalogStore(state => state.catalogList)
+    const category = useCatalogStore(state => state.category)
+    const isLoading = useCatalogStore(state => state.isLoading)
     const route = useRoute<RouteProp<RootStackParamList, 'Categories'>>()
     const { id } = route.params
+    const lastClickTime = useRef(0)
 
-    const activeCatalogItem = catalogList.find(i => i.id === id)
-    const filteredCategory = filteredCategories.find(f => f.name === activeCatalogItem?.name)
-    const filteredSubCategories = activeCatalogItem?.subCategory?.filter(sub =>
-        filteredCategory?.array.some(filtered => filtered === sub.name)
+    const activeCatalogItem = useMemo(() => 
+        catalogList.find(i => i.id === id),
+        [catalogList, id]
+    )
+    
+    const filteredCategory = useMemo(() => 
+        filteredCategories.find(f => f.name === activeCatalogItem?.name),
+        [activeCatalogItem?.name]
+    )
+    
+    const filteredSubCategories = useMemo(() => 
+        activeCatalogItem?.subCategory?.filter(sub =>
+            filteredCategory?.array.some(filtered => filtered === sub.name)
+        ),
+        [activeCatalogItem?.subCategory, filteredCategory?.array]
     )
 
-    console.log('🏷️ [Categories] Rendered:', {
-        mainCategoryId: id,
-        mainCategoryName: activeCatalogItem?.name,
-        selectedSubCategory: category,
-        subCategoriesCount: filteredSubCategories?.length || 0
-    })
+    const handleCategoryClick = useCallback((categoryId: string) => {
+        const now = Date.now()
+        if (isLoading || now - lastClickTime.current < 800) {
+            return
+        }
+        lastClickTime.current = now
+        changeCategory(categoryId)
+    }, [isLoading, changeCategory])
 
     return (
         <View style={styles.Categories}>
@@ -44,10 +60,8 @@ const Categories = () => {
                                 styles.Item,
                                 isActive && styles.ItemActive
                             ]}
-                            onPress={() => {
-                                console.log('👆 [Categories] User clicked:', item.name, 'id:', item.id)
-                                changeCategory(item.id)
-                            }}
+                            onPress={() => handleCategoryClick(item.id)}
+                            disabled={isLoading}
                         >
                             <Txt weight="Bold" color={isActive ? "#4FBD01" : "#4D4D4D"}>
                                 {item.name}
@@ -58,7 +72,9 @@ const Categories = () => {
             </View>
         </View>
     )
-}
+})
+
+Categories.displayName = 'Categories'
 
 export default Categories
 

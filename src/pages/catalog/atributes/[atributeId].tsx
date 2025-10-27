@@ -18,13 +18,10 @@ const Atribute: React.FC = () => {
 
     useEffect(() => {
         const load = async () => {
-            const startTime = performance.now()
-            console.log('📄 [Atribute Page] MOUNT', id, 'at', performance.now())
             try {
                 await getDataFromAtributes(id);
-                console.log('✅ [Atribute Page] LOADED in', (performance.now() - startTime).toFixed(2), 'ms')
             } catch (e) {
-                console.error('❌ [Atribute Page] ERROR', e, (performance.now() - startTime).toFixed(2), 'ms');
+                console.error(e);
             } finally {
                 setIsLoading(false);
             }

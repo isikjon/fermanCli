@@ -15,7 +15,6 @@ export default function home() {
     useEffect(() => {
         getCategories();
         if (isAuth) {
-            console.log('💰 [Home] Loading bonuses...');
             getBonuses();
         }
     }, [getCategories, getBonuses, isAuth]);

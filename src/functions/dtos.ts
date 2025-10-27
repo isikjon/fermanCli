@@ -83,15 +83,11 @@ export function ProductDTO(data: any) {
                     price = product.salePrices[0]?.value ? product.salePrices[0].value / 100 : 0;
                 }
                 
-                let imageUrl = '';
-                if (product?.image?.meta?.downloadHref) {
-                    imageUrl = product.image.meta.downloadHref;
-                } else if (product?.images?.meta?.href) {
-                    imageUrl = product.images.meta.href;
-                }
+                // Сохраняем product.id как image - URL сформируем через getCDNImageUrl
+                const imageUrl = product.id;
                 
                 const formattedProduct = {
-                    image: imageUrl,
+                    image: imageUrl, // Теперь это product.id для CDN маппинга
                     price: price,
                     name: product?.name || 'Без названия',
                     id: product.id,
@@ -122,7 +118,18 @@ export function ProductDTO(data: any) {
 
     console.log('✅ [ProductDTO] Successfully processed', formattedArray.length, 'products');
 
-    return formattedArray;
+    const { hasImages } = require('../config/cdnMapping');
+    
+    const sorted = formattedArray.sort((a, b) => {
+        const aHasImage = hasImages(a.id);
+        const bHasImage = hasImages(b.id);
+        
+        if (aHasImage && !bHasImage) return -1;
+        if (!aHasImage && bHasImage) return 1;
+        return 0;
+    });
+
+    return sorted;
 }
 
 export function postitionsDTO(items: OrderItemType[]) {

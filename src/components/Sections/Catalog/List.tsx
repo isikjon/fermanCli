@@ -43,13 +43,19 @@ const List = () => {
   const titleRef = useRef<View>(null)
 
   const getItemLayout = useCallback(
-    (_, index: number) => ({
+    (_: any, index: number) => ({
       length: 380 + 24,
       offset: (380 + 24) * Math.floor(index / NUM_COLUMNS),
       index,
     }),
     []
   );
+  
+  const keyExtractor = useCallback((item: any) => item.id, [])
+  const renderItem = useCallback(({ item, index }: any) => 
+    <ProductCard item={item} width={itemWidth} key={item.id} />, 
+    [itemWidth]
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -115,27 +121,25 @@ const List = () => {
         <>
           {productList.length > 0 ? (
             <>
-              <TouchableWithoutFeedback>
-                <FlatList
-                  data={productList}
-                  keyExtractor={(item) => item.id}
-                  numColumns={2}
-                  columnWrapperStyle={styles.Row}
-                  renderItem={({ item }) => <ProductCard item={item} width={itemWidth} />}
-                  contentContainerStyle={{
-                    flexGrow: 1,
-                    paddingBottom: '5%',
-                  }}
-                  getItemLayout={getItemLayout}
-                  initialNumToRender={6}
-                  maxToRenderPerBatch={4}
-                  windowSize={5}
-                  scrollEnabled={true}
-                  bounces={true}
-                  removeClippedSubviews={true}
-                  updateCellsBatchingPeriod={50}
-                />
-              </TouchableWithoutFeedback>
+              <FlatList
+                data={productList}
+                keyExtractor={keyExtractor}
+                numColumns={2}
+                columnWrapperStyle={styles.Row}
+                renderItem={renderItem}
+                contentContainerStyle={styles.FlatListContent}
+                getItemLayout={getItemLayout}
+                initialNumToRender={6}
+                maxToRenderPerBatch={4}
+                windowSize={5}
+                removeClippedSubviews={true}
+                updateCellsBatchingPeriod={50}
+                scrollEventThrottle={16}
+                maintainVisibleContentPosition={{
+                  minIndexForVisible: 0,
+                }}
+                legacyImplementation={false}
+              />
               {isPagination && (
                 <View style={styles.PaginationContainer}>
                   <Pagination
@@ -181,6 +185,10 @@ const styles = StyleSheet.create({
   Row: {
     gap: 24,
     marginBottom: 24,
+  },
+  FlatListContent: {
+    flexGrow: 1,
+    paddingBottom: 80,
   },
   PaginationContainer: {
     marginTop: 16,

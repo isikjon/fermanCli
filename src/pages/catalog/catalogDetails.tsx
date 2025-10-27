@@ -26,12 +26,10 @@ const CatalogDetails = () => {
 
     const route = useRoute<RouteProp<RootStackParamList, 'catalogDetails'>>()
     const { id } = route.params
-    console.log('📂 [catalogDetails] Opening category:', id)
 
     const navigation = useNavigation()
 
     useEffect(() => {
-        console.log('🔄 [catalogDetails] Resetting filters and clearing cache for new category:', id)
         changeCategory('')
         changePage(1)
         clearProductsCache()
@@ -76,7 +74,6 @@ const CatalogDetails = () => {
                 return (
                     <View style={styles.BackBox}>
                         <Back onClick={() => {
-                            console.log('🔙 [catalogDetails] Back button clicked')
                             if (navigation.canGoBack()) {
                                 navigation.goBack()
                             } else {

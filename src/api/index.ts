@@ -3,6 +3,7 @@ import * as Auth from './functions/auth';
 import * as Bonus from './functions/bonus';
 import * as Delivery from './functions/delivery';
 import * as Order from "./functions/order"
+import * as Images from './functions/images';
 
 class API {
     public products = Products;
@@ -10,6 +11,7 @@ class API {
     public bonus = Bonus;
     public delivery = Delivery;
     public order = Order
+    public images = Images;
 }
 
 const api = new API();
