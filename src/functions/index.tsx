@@ -9,7 +9,7 @@ import { IOrder, SlotType } from '../types';
 
 
 export function formatPrice(price: number): string {
-    return price.toFixed(2);
+    return price.toFixed(2).replace(/\.00$/, '');
 }
 
 export function generateCode(length = 4) {
