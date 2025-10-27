@@ -91,11 +91,12 @@ export const selfPickupList = [
     {
         city: "Владивосток",
         list: [
-            { address: "ул. Верхнепортовая, 68а (Эгершельд)", rating: 5.0, storeId: "7c0dc9ce-ce1e-11ea-0a80-09ca000e5e93" },
+            { address: "ул. Верхнепортовая, 41В (Эгершельд)", rating: 5.0, storeId: "7c0dc9ce-ce1e-11ea-0a80-09ca000e5e93" },
             { address: "ул. Чкалова, 30 (Заря)", rating: 4.5, storeId: "028e05a7-b4fa-11ee-0a80-1198000442be" },
             { address: "Реми-Сити (ул. Народный пр-т, 20)", rating: 4.5, storeId: "028e05a7-b4fa-11ee-0a80-1198000442be" },
             { address: "ул. Некрасовская, 49а (ТЦ Море)", rating: 4.5, storeId: "028e05a7-b4fa-11ee-0a80-1198000442be" },
             { address: "ул. Тимирязева, 31 ст1 (район Спутник)", rating: 4.5, storeId: "a99d6fdf-0970-11ed-0a80-0ed600075845" },
+            { address: "Океанский пр-т, 108 (1-я Речка)", rating: 5.0, storeId: "1a2b3c4d-1111-11ea-0a80-09ca000e5e94" },
         ]
     },
     // {

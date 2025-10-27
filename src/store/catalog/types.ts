@@ -58,6 +58,7 @@ export interface CachedState {
     getCategories: () => Promise<void>
     getProducts: (catalogId: string) => Promise<void>
     getImage: (link: string, isClear?: boolean) => Promise<any>
+    preloadImages: (links: string[]) => Promise<void>
     searchProduct: () => Promise<void>
     searchProductByName: (name: string) => Promise<void>
     getProduct: (id: string) => Promise<void>

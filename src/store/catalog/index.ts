@@ -3,6 +3,9 @@ import { CachedState, State } from './types'
 import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { imagePreloader } from '../../utils/imageBatchPreloader'
+
+const imageUrlCache: Record<string, string> = {}
 
 const useCatalogStore = create<CachedState>()(
     persist(
@@ -36,7 +39,7 @@ const useCatalogStore = create<CachedState>()(
             
             clearProductsCache: () => {
                 console.log('🗑️ [Store] Clearing products cache')
-                set({ productsCache: {}, productsCountCache: {} })
+                set({ productsCache: {} })
             },
             
             setSelectedAmount: (productId: string, amount: number) => {
@@ -69,7 +72,7 @@ const useCatalogStore = create<CachedState>()(
 
             getProducts: async (catalogId) => {
                 console.log('getProducts called with catalogId:', catalogId)
-                const { activePage, category, productsCache } = get()
+                const { activePage, category, productsCache, preloadImages } = get()
                 const key = `${category || catalogId}_${activePage}`
                 console.log('Cache key:', key, 'Category:', category, 'CatalogId:', catalogId)
                 set({ isLoading: true })
@@ -89,13 +92,47 @@ const useCatalogStore = create<CachedState>()(
                     productsCache: { ...state.productsCache, [key]: response },
                     isLoading: false,
                 }))
+
+                const imageLinks = response.map(p => p.image).filter(Boolean)
+                if (imageLinks.length > 0) {
+                    setTimeout(() => {
+                        preloadImages(imageLinks)
+                    }, 100)
+                }
             },
 
             getImage: async (link: string, isClear?: boolean) => {
+                if (!link || link.trim() === '') return null
+
+                if (imageUrlCache[link]) {
+                    return imageUrlCache[link]
+                }
+
                 const imageMetadata = await api.products.getImage(link, isClear)
+                
+                if (imageMetadata && !isClear) {
+                    imageUrlCache[link] = imageMetadata
+                }
+
                 const clearImage = isClear && await api.products.downloadImage(imageMetadata)
 
                 return isClear ? clearImage : imageMetadata
+            },
+
+            preloadImages: async (links: string[]) => {
+                const validLinks = links.filter(link => link && link.trim() !== '' && !imageUrlCache[link])
+                if (validLinks.length === 0) return
+
+                console.log('🖼️ [preloadImages] Starting batch preload for', validLinks.length, 'images')
+
+                await imagePreloader.preload(validLinks, async (link) => {
+                    const imageUrl = await api.products.getImage(link, false)
+                    if (imageUrl) {
+                        imageUrlCache[link] = imageUrl
+                    }
+                })
+
+                console.log('✅ [preloadImages] Batch preload completed')
             },
 
 
@@ -107,7 +144,7 @@ const useCatalogStore = create<CachedState>()(
 
             // Поиск по явно переданному имени — чтобы избежать гонок при changeSearch()
             searchProductByName: async (name: string) => {
-                const { searchCache } = get()
+                const { searchCache, preloadImages } = get()
                 if (name.length === 0) {
                     set({ searchList: [] })
                     return
@@ -123,6 +160,13 @@ const useCatalogStore = create<CachedState>()(
                     searchList: response,
                     searchCache: { ...state.searchCache, [name]: response },
                 }))
+
+                const imageLinks = response.map(p => p.image).filter(Boolean)
+                if (imageLinks.length > 0) {
+                    setTimeout(() => {
+                        preloadImages(imageLinks)
+                    }, 100)
+                }
             },
 
             getProduct: async (id: string) => {
@@ -146,9 +190,17 @@ const useCatalogStore = create<CachedState>()(
 
             getDataFromAtributes: async (id: string) => {
                 try {
+                    const { preloadImages } = get()
                     set({ isLoading: true })
                     const response = await api.products.getProductFromAtributes(id)
                     set({ isLoading: false, productWithAtrList: response })
+
+                    const imageLinks = response.map(p => p.image).filter(Boolean)
+                    if (imageLinks.length > 0) {
+                        setTimeout(() => {
+                            preloadImages(imageLinks)
+                        }, 100)
+                    }
                 } catch (error) {
                     console.log(error)
                     set({ isLoading: false })
