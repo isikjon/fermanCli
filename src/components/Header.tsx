@@ -69,7 +69,7 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
     }, [localSearch, changeSearch, searchProductByName])
 
     return (
-        <View style={[styles.Header, { paddingTop: insets.top + 24 }]}>
+        <View style={[styles.Header, { paddingTop: Math.max(insets.top, 16) }]}>
             <View style={styles.TopBar}>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('home')}
@@ -89,11 +89,11 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
                 <TouchBox isFull onClick={() => navigation.navigate("delivery")}>
                     <View style={styles.Box}>
                         {deliveryData ? (
-                            <Txt lines={1}>{fillDeliveryAddress()}</Txt>
+                            <Txt numberOfLines={2} size={14}>{fillDeliveryAddress()}</Txt>
                         ) : (
-                            <Txt lines={1}>Адрес не выбран</Txt>
+                            <Txt numberOfLines={1} size={14}>Адрес не выбран</Txt>
                         )}
-                        <Txt lines={1} color="rgba(77,77,77,0.7)">
+                        <Txt numberOfLines={1} color="rgba(77,77,77,0.7)" size={12}>
                             {deliveryData?.type !== undefined
                                 ? deliveryData.type === 0 ? "Доставка" : "Самовывоз"
                                 : "Способ получения"}
@@ -101,7 +101,7 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
                     </View>
                 </TouchBox>
 
-                <TouchBox padding={40} onClick={() => navigation.navigate(isAuth ? "profile" : "auth")}>
+                <TouchBox padding={36} height={48} onClick={() => navigation.navigate(isAuth ? "profile" : "auth")}>
                     {isAuth ? (
                         <>
                             <Image style={styles.Image} source={cow} />
@@ -157,11 +157,11 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
 export default Header
 
 const styles = StyleSheet.create({
-    Logo: { width: 74, height: 74 },
-    Header: { gap: 30, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
-    TopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 24 },
-    ControllBar: { flexDirection: 'row', alignItems: 'center', gap: 20, justifyContent: 'space-between' },
-    Box: { width: "100%" },
+    Logo: { width: 64, height: 64 },
+    Header: { gap: 16, paddingHorizontal: 16, paddingBottom: 16 },
+    TopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    ControllBar: { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'space-between' },
+    Box: { width: "100%", flex: 1, flexShrink: 1 },
     Bonus: { position: "absolute", bottom: 4, left: 4 },
     Image: { position: "absolute", top: 4 },
     SearchBox: {

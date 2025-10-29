@@ -12,11 +12,10 @@ const Back: FC<Props> = ({ onClick }) => {
         <TouchableOpacity 
             style={styles.BackButton} 
             onPress={onClick} 
-            activeOpacity={0.5}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.6}
         >
-            <Icons.ArrowRight style={styles.BackIcon} />
-            <Txt color='#4D4D4D' weight='RobotoCondensed-Bold' size={18}>Назад</Txt>
+            <Icons.ArrowRight style={styles.BackIcon} color="#4FBD01" />
+            <Txt color='#4FBD01' weight='RobotoCondensed-Bold' size={18}>Назад</Txt>
         </TouchableOpacity>
     )
 }
@@ -27,7 +26,14 @@ const styles = StyleSheet.create({
     BackButton: {
         alignItems: "center",
         flexDirection: "row",
-        gap: 8
+        gap: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderWidth: 1,
+        borderColor: "#4FBD01",
+        borderRadius: 12,
+        alignSelf: "flex-start",
+        minHeight: 48,
     },
     BackIcon: {
         width: 24,

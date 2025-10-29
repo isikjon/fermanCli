@@ -12,18 +12,8 @@ export const MOYSKLAD_TOKEN = "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2"
 export async function getProducts(offset: number, category: string) {
     try {
         const { changeIsPagination } = useCatalogStore.getState();
-        const { deliveryData, addresses } = useDeliveryStore.getState();
-        const activeDelivery = addresses.find((_, index) => index === deliveryData?.id);
-        const zone = activeDelivery && getZoneForLocation(activeDelivery?.lat, activeDelivery?.lng) || null;
-        const storeId = deliveryDataObj.zones.find(i => i.zone.name === zone?.description);
-
-        const url = "https://api.moysklad.ru/api/remap/1.2/report/stock/all";
-        const store = storeId ? `https://api.moysklad.ru/api/remap/1.2/entity/store/${storeId.store.id}` : null;
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-
-        const fullUrl = storeId
-            ? `${url}?filter=store=${store};productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`
-            : `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
+        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
 
         console.log(fullUrl);
 

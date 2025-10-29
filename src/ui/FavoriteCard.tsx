@@ -77,13 +77,20 @@ const FavoriteCard: FC<Props> = ({ item }) => {
                     </Button>
                 </View>
 
-                {!inCart && (
-                    <View style={styles.Flex}>
-                        <Button onClick={handleAddToCart}>
-                            <Txt color="#fff" weight='RobotoCondensed-Bold' size={16}>В корзину</Txt>
-                        </Button>
-                    </View>
-                )}
+                <View style={styles.Flex}>
+                    <Button 
+                        onClick={handleAddToCart}
+                        background={inCart ? "#EEEEEE" : "#4FBD01"}
+                    >
+                        <Txt 
+                            color={inCart ? "#4D4D4D" : "#fff"} 
+                            weight='RobotoCondensed-Bold' 
+                            size={16}
+                        >
+                            {inCart ? "В корзине" : "В корзину"}
+                        </Txt>
+                    </Button>
+                </View>
             </Row>
         </View>
     )

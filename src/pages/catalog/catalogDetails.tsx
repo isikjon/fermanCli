@@ -144,9 +144,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     BackBox: {
-        paddingTop: 25,
-        marginBottom: -20,
-        paddingHorizontal: 15,
+        paddingTop: 16,
+        marginBottom: 16,
+        paddingHorizontal: 16,
         zIndex: 10,
         elevation: 10,
     },

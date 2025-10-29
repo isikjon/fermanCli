@@ -39,7 +39,9 @@ const Alert = () => {
                 type === "error" && styles.Error,
             ]}
         >
-            <Txt color="#fff">{message}</Txt>
+            <Txt color="#fff" weight="RobotoCondensed-Bold" size={16} style={{ textAlign: 'center' }}>
+                {message}
+            </Txt>
         </Animated.View>
     )
 }
@@ -52,9 +54,17 @@ const styles = StyleSheet.create({
         position: "absolute",
         width: Dimensions.get("screen").width - 40,
         left: 20,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 20
+        paddingVertical: 20,
+        paddingHorizontal: 24,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
     },
     Success: {
         backgroundColor: "#4FBD01",

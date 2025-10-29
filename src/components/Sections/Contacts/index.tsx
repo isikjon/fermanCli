@@ -7,13 +7,15 @@ import Icons from '../../../ui/Icons'
 const Contacts = () => {
     const handlePhonePress = (phone: string) => {
         Linking.openURL(`tel:${phone}`).catch(() => {
-            alert('Не удалось открыть телефонный набор')
+            const { setMessage } = require('../../../store/notification').default.getState()
+            setMessage('Не удалось открыть телефонный набор', 'error')
         })
     }
 
     const handleEmailPress = (email: string) => {
         Linking.openURL(`mailto:${email}`).catch(() => {
-            alert('Не удалось открыть почтовый клиент')
+            const { setMessage } = require('../../../store/notification').default.getState()
+            setMessage('Не удалось открыть почтовый клиент', 'error')
         })
     }
 

@@ -124,7 +124,7 @@ function RootLayout() {
         theme={CustomTheme} 
         onStateChange={onStateChange}
       >
-        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
           <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
           <View
             style={styles.keyboard}

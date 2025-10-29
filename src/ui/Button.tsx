@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
         width: "100%",
         borderRadius: 8,
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        paddingHorizontal: 8
     },
     Outline: {
         backgroundColor: "transparent",

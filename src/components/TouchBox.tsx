@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: "center",
         justifyContent: "center",
-        position: "relative"
+        position: "relative",
+        overflow: "hidden"
     }
 })

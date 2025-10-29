@@ -19,7 +19,7 @@ const profile = () => {
                     <View style={styles.Box}>
                         <View style={styles.TextBox}>
                             <Back onClick={() => navigation.goBack()} />
-                            <Txt size={40} weight='Jingleberry'>ЛИЧНЫЙ КАБИНЕТ</Txt>
+                            <Txt size={36} weight='Jingleberry' style={{ marginTop: 16 }}>ЛИЧНЫЙ КАБИНЕТ</Txt>
                         </View>
 
                         <Bonuses />
@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
         gap: 30
     },
     TextBox: {
-        paddingHorizontal: 16
+        paddingHorizontal: 16,
+        gap: 8
     }
 })

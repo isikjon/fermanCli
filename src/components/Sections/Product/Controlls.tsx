@@ -64,7 +64,7 @@ const Controlls = () => {
         <View style={styles.Box}>
             <Row gap={12}>
                 <View style={styles.FlexBox}>
-                    <Txt weight='Jingleberry' size={22} lineHeight={26}>{activeProduct.name}</Txt>
+                    <Txt weight='Jingleberry' size={20} lineHeight={24} numberOfLines={3}>{activeProduct.name}</Txt>
                 </View>
 
                 <View style={styles.Price}>
@@ -76,30 +76,28 @@ const Controlls = () => {
             </Row>
 
             <Row>
-                {!inCart && (
-                    <Counter 
-                        amount={activeProduct.weighed ? weightAmount : amount} 
-                        onChange={(value) => {
-                            if (activeProduct.weighed) {
-                                setWeightAmount(value)
-                            } else {
-                                setAmount(value)
-                            }
-                            if (activeProduct.id) {
-                                setSelectedAmount(activeProduct.id, value)
-                            }
-                        }}
-                        step={activeProduct.weighed ? 0.1 : 1}
-                        min={activeProduct.weighed ? 0.1 : 1}
-                        sign={activeProduct.weighed ? "кг" : ""}
-                        max={maxStock}
-                        isNotFull
-                    />
-                )}
+                <Counter 
+                    amount={activeProduct.weighed ? weightAmount : amount} 
+                    onChange={(value) => {
+                        if (activeProduct.weighed) {
+                            setWeightAmount(value)
+                        } else {
+                            setAmount(value)
+                        }
+                        if (activeProduct.id) {
+                            setSelectedAmount(activeProduct.id, value)
+                        }
+                    }}
+                    step={activeProduct.weighed ? 0.1 : 1}
+                    min={activeProduct.weighed ? 0.1 : 1}
+                    sign={activeProduct.weighed ? "кг" : ""}
+                    max={maxStock}
+                    isNotFull
+                />
                 <View style={styles.FlexBox}>
                     <Button
                         onClick={() => {
-                            if (activeProduct && !inCart) {
+                            if (activeProduct) {
                                 const cartData = cartList.find(i => i.id === activeProduct.id)
                                 const currentInCart = activeProduct.weighed 
                                     ? (cartData?.weight || 0)
@@ -132,8 +130,6 @@ const Controlls = () => {
                                     stock: maxStock
                                 })
                                 clearSelectedAmount(activeProduct.id)
-                            } else {
-                                navigation.navigate('cart')
                             }
                         }}
                         background={inCart ? "#EEEEEE" : "#4FBD01"}
@@ -155,15 +151,17 @@ const styles = StyleSheet.create({
     Box: {
         paddingHorizontal: 16,
         marginVertical: 16,
-        gap: 32
+        gap: 24
     },
     FlexBox: {
         width: "100%",
         flex: 1,
+        flexShrink: 1
     },
     Price: {
         gap: 4,
-        alignItems: "flex-end"
+        alignItems: "flex-end",
+        flexShrink: 0
     },
     WeightBox: {
         alignItems: "flex-end"

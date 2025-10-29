@@ -52,26 +52,24 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const totalPriceText = useMemo(() => `Итого: ${totalPrice} ₽`, [totalPrice])
 
     const handleAddToCart = useCallback(() => {
-        if (!inCart) {
-            if (item.stock !== undefined && amount > item.stock) {
-                alert('На складе недостаточно товара')
-                return
-            }
-            
-            addItemToCart({
-                amount: item.weighed ? 1 : amount,
-                id: item.id,
-                image: item.image,
-                name: item.name,
-                price: item.price,
-                isWeighted: item.weighed,
-                weight: item.weighed ? amount : undefined,
-                stock: item.stock
-            })
-        } else {
-            navigation.navigate('cart' as never)
+        const { setMessage } = require('../store/notification').default.getState()
+        
+        if (item.stock !== undefined && amount > item.stock) {
+            setMessage('На складе недостаточно товара', 'error')
+            return
         }
-    }, [inCart, item, amount, addItemToCart, navigation])
+        
+        addItemToCart({
+            amount: item.weighed ? 1 : amount,
+            id: item.id,
+            image: item.image,
+            name: item.name,
+            price: item.price,
+            isWeighted: item.weighed,
+            weight: item.weighed ? amount : undefined,
+            stock: item.stock
+        })
+    }, [item, amount, addItemToCart])
     
     const handleProductPress = useCallback(() => {
         navigation.navigate('product' as never, { id: item.id } as never)
@@ -108,16 +106,14 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             </View>
 
             <View style={styles.Box}>
-                {!inCart && (
-                    <Counter
-                        amount={amount}
-                        step={step}
-                        onChange={handleAmountChange}
-                        sign={item.weighed ? "кг" : ""}
-                        max={item.stock}
-                        isSmall
-                    />
-                )}
+                <Counter
+                    amount={amount}
+                    step={step}
+                    onChange={handleAmountChange}
+                    sign={item.weighed ? "кг" : ""}
+                    max={item.stock}
+                    isSmall
+                />
 
                 <Button
                     onClick={handleAddToCart}

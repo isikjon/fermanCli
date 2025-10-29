@@ -10,7 +10,7 @@ const Banner = () => {
             <Cup width={26} height={26} />
 
             <View style={styles.FlexBox}>
-                <Txt size={18} weight='Jingleberry'>Бесплатная доставка от 3000 руб. Минимальный заказ: 600 руб.</Txt>
+                <Txt size={16} weight='Jingleberry' numberOfLines={2}>Бесплатная доставка от 3000 руб. Минимальный заказ: 600 руб.</Txt>
             </View>
         </View>
     )
@@ -22,14 +22,15 @@ const styles = StyleSheet.create({
     Banner: {
         flex: 1,
         backgroundColor: "#FD8A0A",
-        paddingVertical: 13,
+        paddingVertical: 10,
         borderRadius: 12,
         flexDirection: "row",
         alignItems: "center",
-        gap: 16,
-        paddingHorizontal: 20,
+        gap: 12,
+        paddingHorizontal: 16,
     },
     FlexBox: {
-        flex: 1
+        flex: 1,
+        flexShrink: 1
     }
 })
