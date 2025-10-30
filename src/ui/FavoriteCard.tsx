@@ -20,10 +20,14 @@ const FavoriteCard: FC<Props> = ({ item }) => {
     const addItemToCart = useCartStore(state => state.addItemToCart)
     const removeItemFromFav = useFavoriteStore(state => state.removeItemFromFav)
     
-    // Проверяем наличие в корзине
     const inCart = useMemo(() => 
         cartList.some(i => i.id === item.id), 
         [cartList, item.id]
+    )
+
+    const isOutOfStock = useMemo(() => 
+        item.stock !== undefined && item.stock <= 0, 
+        [item.stock]
     )
     
     const price = useMemo(() => 
@@ -45,8 +49,33 @@ const FavoriteCard: FC<Props> = ({ item }) => {
     }, [item.id, removeItemFromFav])
     
     const handleAddToCart = useCallback(() => {
+        const { setMessage } = require('../store/notification').default.getState()
+        
+        if (isOutOfStock) {
+            setMessage('Товар отсутствует в наличии', 'error')
+            return
+        }
+        
         addItemToCart({ amount: 1, ...item })
-    }, [item, addItemToCart])
+    }, [item, addItemToCart, isOutOfStock])
+
+    const buttonBackground = useMemo(() => {
+        if (isOutOfStock) return "#CCCCCC"
+        if (inCart) return "#EEEEEE"
+        return "#4FBD01"
+    }, [isOutOfStock, inCart])
+
+    const buttonText = useMemo(() => {
+        if (isOutOfStock) return "Нет в наличии"
+        if (inCart) return "В корзине"
+        return "В корзину"
+    }, [isOutOfStock, inCart])
+
+    const buttonTextColor = useMemo(() => {
+        if (isOutOfStock) return "#666666"
+        if (inCart) return "#4D4D4D"
+        return "#fff"
+    }, [isOutOfStock, inCart])
 
     return (
         <View style={styles.FavoriteCard}>
@@ -80,14 +109,15 @@ const FavoriteCard: FC<Props> = ({ item }) => {
                 <View style={styles.Flex}>
                     <Button 
                         onClick={handleAddToCart}
-                        background={inCart ? "#EEEEEE" : "#4FBD01"}
+                        background={buttonBackground}
+                        disabled={isOutOfStock}
                     >
                         <Txt 
-                            color={inCart ? "#4D4D4D" : "#fff"} 
+                            color={buttonTextColor} 
                             weight='RobotoCondensed-Bold' 
                             size={16}
                         >
-                            {inCart ? "В корзине" : "В корзину"}
+                            {buttonText}
                         </Txt>
                     </Button>
                 </View>

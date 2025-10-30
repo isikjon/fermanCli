@@ -43,10 +43,10 @@ const Total = () => {
     const minOrderAmount = 600;
     const currentAmount = calculateAmount();
     const isMinOrderMet = currentAmount >= minOrderAmount;
+    const remainingToMin = minOrderAmount - currentAmount;
 
     function checkout() {
         if (!isMinOrderMet) {
-            // Можно добавить уведомление пользователю
             console.log('Минимальная сумма заказа не достигнута');
             return;
         }
@@ -82,7 +82,7 @@ const Total = () => {
                 >
                     <Txt size={16} weight='Bold' color={!isMinOrderMet ? '#999' : '#fff'}>
                         {!isMinOrderMet 
-                            ? `Мин. заказ ${minOrderAmount} руб.`
+                            ? `Добавьте товаров ещё на ${formatPrice(remainingToMin)} руб.`
                             : 'Оформить заказ'
                         }
                     </Txt>

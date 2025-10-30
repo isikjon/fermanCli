@@ -8,6 +8,8 @@ import useCartStore from '../store/cart'
 import { useNavigation } from '@react-navigation/native'
 import { formatPrice } from '../functions'
 import OptimizedImage from './OptimizedImage'
+import { roundAmount } from '../utils/roundAmount'
+import useDeliveryStore from '../store/delivery'
 
 interface Props {
     item: ProductType
@@ -18,6 +20,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
     const addItemToCart = useCartStore(state => state.addItemToCart)
     const cartList = useCartStore(state => state.cartList)
+    const { deliveryData } = useDeliveryStore()
     
     const cartItem = useMemo(() => 
         cartList.find(i => i.id === item.id), 
@@ -42,17 +45,47 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         }
     }, [cartItem, item.weighed])
 
-    // Мемоизируем вычисления
-    const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
-    const totalPrice = useMemo(() => formatPrice(amount * item.price), [amount, item.price])
-    const priceText = useMemo(() => 
-        `${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`, 
-        [item.price, item.weighed]
+    const isGreenPrice = useMemo(() => item.isGreenPrice === true, [item.isGreenPrice])
+    const isSelfPickup = useMemo(() => deliveryData?.type === 1, [deliveryData?.type])
+    const isGreenPriceBlockedBySelfPickup = useMemo(() => 
+        isGreenPrice && isSelfPickup, 
+        [isGreenPrice, isSelfPickup]
     )
+
+    const discountedPrice = useMemo(() => 
+        isGreenPrice ? item.price * 0.93 : item.price, 
+        [isGreenPrice, item.price]
+    )
+
+    const step = useMemo(() => item.weighed ? 0.1 : 1, [item.weighed])
+    const totalPrice = useMemo(() => formatPrice(amount * discountedPrice), [amount, discountedPrice])
+    
+    const priceText = useMemo(() => {
+        if (isGreenPrice) {
+            return `${formatPrice(discountedPrice)} ₽ / ${item.weighed ? "кг" : "шт"}`;
+        }
+        return `${formatPrice(item.price)} ₽ / ${item.weighed ? "кг" : "шт"}`;
+    }, [isGreenPrice, discountedPrice, item.price, item.weighed])
+    
     const totalPriceText = useMemo(() => `Итого: ${totalPrice} ₽`, [totalPrice])
+
+    const isOutOfStock = useMemo(() => 
+        item.stock !== undefined && item.stock <= 0, 
+        [item.stock]
+    )
 
     const handleAddToCart = useCallback(() => {
         const { setMessage } = require('../store/notification').default.getState()
+        
+        if (isGreenPriceBlockedBySelfPickup) {
+            setMessage('Зелёные ценники доступны только при доставке!', 'error')
+            return
+        }
+        
+        if (isOutOfStock) {
+            setMessage('Товар отсутствует в наличии', 'error')
+            return
+        }
         
         if (item.stock !== undefined && amount > item.stock) {
             setMessage('На складе недостаточно товара', 'error')
@@ -64,20 +97,41 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             id: item.id,
             image: item.image,
             name: item.name,
-            price: item.price,
+            price: discountedPrice,
             isWeighted: item.weighed,
             weight: item.weighed ? amount : undefined,
             stock: item.stock
         })
-    }, [item, amount, addItemToCart])
+    }, [item, amount, addItemToCart, isOutOfStock, isGreenPriceBlockedBySelfPickup, discountedPrice])
     
     const handleProductPress = useCallback(() => {
         navigation.navigate('product' as never, { id: item.id } as never)
     }, [item.id, navigation])
     
     const handleAmountChange = useCallback((value: number) => {
-        setAmount(Number(value.toFixed(2)))
-    }, [])
+        setAmount(roundAmount(value, item.weighed))
+    }, [item.weighed])
+
+    const buttonBackground = useMemo(() => {
+        if (isGreenPriceBlockedBySelfPickup) return "#CCCCCC"
+        if (isOutOfStock) return "#CCCCCC"
+        if (inCart) return "#EEEEEE"
+        return "#4FBD01"
+    }, [isGreenPriceBlockedBySelfPickup, isOutOfStock, inCart])
+
+    const buttonText = useMemo(() => {
+        if (isGreenPriceBlockedBySelfPickup) return "Только при доставке"
+        if (isOutOfStock) return "Нет в наличии"
+        if (inCart) return "В корзине"
+        return "В корзину"
+    }, [isGreenPriceBlockedBySelfPickup, isOutOfStock, inCart])
+
+    const buttonTextColor = useMemo(() => {
+        if (isGreenPriceBlockedBySelfPickup) return "#666666"
+        if (isOutOfStock) return "#666666"
+        if (inCart) return "#4D4D4D"
+        return "#fff"
+    }, [isGreenPriceBlockedBySelfPickup, isOutOfStock, inCart])
 
     return (
         <TouchableOpacity
@@ -96,9 +150,21 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
                 <View style={styles.Info}>
                     <Txt numberOfLines={2}>{item.name}</Txt>
-                    <Txt weight='RobotoCondensed-Bold'>
-                        {priceText}
-                    </Txt>
+                    {isGreenPrice && (
+                        <View style={styles.PriceRow}>
+                            <Txt weight='RobotoCondensed-Regular' size={14} color="#999" style={styles.OldPrice}>
+                                {formatPrice(item.price)} ₽
+                            </Txt>
+                            <Txt weight='RobotoCondensed-Bold' color="#4FBD01" size={16}>
+                                {priceText}
+                            </Txt>
+                        </View>
+                    )}
+                    {!isGreenPrice && (
+                        <Txt weight='RobotoCondensed-Bold'>
+                            {priceText}
+                        </Txt>
+                    )}
                     <Txt size={14} color="#666">
                         {totalPriceText}
                     </Txt>
@@ -113,14 +179,16 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                     sign={item.weighed ? "кг" : ""}
                     max={item.stock}
                     isSmall
+                    disabled={isOutOfStock}
                 />
 
                 <Button
                     onClick={handleAddToCart}
-                    background={inCart ? "#EEEEEE" : "#4FBD01"}
+                    background={buttonBackground}
+                    disabled={isOutOfStock || isGreenPriceBlockedBySelfPickup}
                 >
-                    <Txt color={inCart ? "#4D4D4D" : "#fff"} weight='RobotoCondensed-Bold' size={18}>
-                        {inCart ? "В корзине" : "В корзину"}
+                    <Txt color={buttonTextColor} weight='RobotoCondensed-Bold' size={18}>
+                        {buttonText}
                     </Txt>
                 </Button>
             </View>
@@ -136,6 +204,7 @@ export default memo(ProductCard, (prevProps, nextProps) => {
         prevProps.item.id === nextProps.item.id &&
         prevProps.item.price === nextProps.item.price &&
         prevProps.item.stock === nextProps.item.stock &&
+        prevProps.item.isGreenPrice === nextProps.item.isGreenPrice &&
         prevProps.width === nextProps.width
     )
 })
@@ -168,5 +237,15 @@ const styles = StyleSheet.create({
     Box: {
         marginTop: 20,
         gap: 16,
+    },
+    PriceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap'
+    },
+    OldPrice: {
+        textDecorationLine: 'line-through',
+        textDecorationStyle: 'solid'
     }
 })

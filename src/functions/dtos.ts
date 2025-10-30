@@ -118,18 +118,7 @@ export function ProductDTO(data: any) {
 
     console.log('✅ [ProductDTO] Successfully processed', formattedArray.length, 'products');
 
-    const { hasImages } = require('../config/cdnMapping');
-    
-    const sorted = formattedArray.sort((a, b) => {
-        const aHasImage = hasImages(a.id);
-        const bHasImage = hasImages(b.id);
-        
-        if (aHasImage && !bHasImage) return -1;
-        if (!aHasImage && bHasImage) return 1;
-        return 0;
-    });
-
-    return sorted;
+    return formattedArray;
 }
 
 export function postitionsDTO(items: OrderItemType[]) {

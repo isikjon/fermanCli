@@ -3,6 +3,7 @@ import React, { FC, useCallback, useMemo, memo } from 'react'
 import Icons from './Icons'
 import Txt from './Text'
 import useNotificationStore from '../store/notification'
+import { roundAmount } from '../utils/roundAmount'
 
 interface Props {
     amount: number
@@ -14,6 +15,7 @@ interface Props {
     isSmall?: boolean
     sign?: string
     max?: number    // максимальное значение (лимит остатка)
+    disabled?: boolean  // полное отключение счетчика
 }
 
 const Counter: FC<Props> = ({
@@ -25,32 +27,35 @@ const Counter: FC<Props> = ({
                                 isNotFull,
                                 isSmall,
                                 sign,
-                                max
+                                max,
+                                disabled = false
                             }) => {
     const setMessage = useNotificationStore(state => state.setMessage)
     
-    // Мемоизируем вычисления
-    const isMinusDisabled = useMemo(() => amount <= min, [amount, min])
+    const isWeighted = useMemo(() => step < 1, [step])
+    
+    const isMinusDisabled = useMemo(() => disabled || amount <= min, [disabled, amount, min])
     const isPlusDisabled = useMemo(() => 
-        typeof max === 'number' ? amount >= max : false, 
-        [amount, max]
+        disabled || (typeof max === 'number' ? amount >= max : false), 
+        [disabled, amount, max]
     )
 
     const handleDecrease = useCallback(() => {
-        if (amount - step >= min) {
-            onChange(Number((amount - step).toFixed(2)))
+        const newValue = roundAmount(amount - step, isWeighted)
+        if (newValue >= min) {
+            onChange(newValue)
         }
-    }, [amount, step, min, onChange])
+    }, [amount, step, min, onChange, isWeighted])
 
     const handleIncrease = useCallback(() => {
-        const next = Number((amount + step).toFixed(2))
-        if (typeof max === 'number' && next > max) {
+        const newValue = roundAmount(amount + step, isWeighted)
+        if (typeof max === 'number' && newValue > max) {
             setMessage('На складе больше товара нет', 'error')
-            onChange(Number(max.toFixed(2)))
+            onChange(roundAmount(max, isWeighted))
             return
         }
-        onChange(next)
-    }, [amount, step, max, onChange, setMessage])
+        onChange(newValue)
+    }, [amount, step, max, onChange, setMessage, isWeighted])
 
     const valueFontSize = useMemo(() => 
         isLarger ? 24 : isSmall ? 16 : (step < 1 ? 18 : 20),

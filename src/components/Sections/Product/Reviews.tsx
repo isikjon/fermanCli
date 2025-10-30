@@ -12,7 +12,9 @@ const Reviews = () => {
                 <TouchBox isFull background="#4FBD0180" height={56}>
                     <View style={styles.Group}>
                         <Icons.Cart />
-                        <Txt weight='Bold' size={16}>Добавить в список покупок</Txt>
+                        <View style={styles.TextWrapper}>
+                            <Txt weight='Bold' size={16} numberOfLines={1}>Добавить в список покупок</Txt>
+                        </View>
                     </View>
                 </TouchBox>
 
@@ -54,5 +56,9 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 16
+    },
+    TextWrapper: {
+        flex: 1,
+        flexShrink: 1
     }
 })

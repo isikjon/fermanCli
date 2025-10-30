@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatPrice } from '../../functions';
+import { roundWeightAmount } from '../../utils/roundAmount';
 
 const useCartStore = create<State>()(devtools((set, get) => ({
     cartList: [],
@@ -30,7 +31,7 @@ const useCartStore = create<State>()(devtools((set, get) => ({
             updatedCart = cart.map(p => {
                 if (p.id === item.id) {
                     if (item.isWeighted && item.weight !== undefined && p.weight !== undefined) {
-                        return { ...p, weight: p.weight + item.weight }
+                        return { ...p, weight: roundWeightAmount(p.weight + item.weight) }
                     } else {
                         return { ...p, amount: p.amount + item.amount }
                     }

@@ -11,18 +11,18 @@ import Back from '../ui/Back'
 import CodeInput from '../ui/CodeInput'
 import useGlobalStore from '../store'
 import { useNavigation } from '@react-navigation/native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const auth = () => {
     const { phone, changeData, isCode, code, sendCode, verifyCode, timer, startTimer, changeIsCode, autoFillCode } = useAuthStore()
     const { isFirstLaunch, setFirstLaunch, isDeliverySet, isAuth } = useGlobalStore()
     const navigation = useNavigation<any>()
+    const insets = useSafeAreaInsets()
 
     const handleSkip = async () => {
         console.log('Skipping auth, setting isFirstLaunch to false')
         setFirstLaunch(false)
-        // Небольшая задержка чтобы убедиться что состояние сохранилось
         setTimeout(() => {
-            // Если доставка не настроена, переходим на экран доставки
             if (!isDeliverySet) {
                 navigation.replace('delivery')
             } else {
@@ -31,7 +31,6 @@ const auth = () => {
         }, 100)
     }
 
-    // Кнопка "Пропустить" не показывается при первом запуске - авторизация обязательна
     const showSkipButton = false
 
     useEffect(() => {
@@ -45,10 +44,10 @@ const auth = () => {
     }, [isCode, autoFillCode])
 
     return (
-        <View style={styles.Container}>
+        <View style={[styles.Container, { paddingTop: Math.max(insets.top, 16) }]}>
             {showSkipButton && (
                 <TouchableOpacity 
-                    style={styles.SkipButton} 
+                    style={[styles.SkipButton, { top: Math.max(insets.top, 16) }]} 
                     onPress={handleSkip}
                     activeOpacity={0.7}
                 >
@@ -114,7 +113,6 @@ export default auth
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: 16,
         flex: 1,
         backgroundColor: "#fff"
     },
@@ -125,7 +123,6 @@ const styles = StyleSheet.create({
     },
     SkipButton: {
         position: 'absolute',
-        top: 16,
         right: 16,
         zIndex: 1000,
         padding: 8,

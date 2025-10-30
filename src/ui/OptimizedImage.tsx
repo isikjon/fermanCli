@@ -3,6 +3,7 @@ import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native'
 import FastImage, { ResizeMode } from 'react-native-fast-image'
 import { getCDNImageUrl } from '../config/cdnMapping'
 import Empty from '../assets/svg/Empty'
+import { getMoyskladImageUrl, getMoyskladVariantImageUrl } from '../api/functions/images'
 
 interface OptimizedImageProps {
   productId: string
@@ -21,28 +22,74 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 }) => {
   const [imageUrl, setImageUrl] = useState<string>('')
   const [hasError, setHasError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let isMounted = true
 
-    const cdnUrl = getCDNImageUrl(productId, index)
-    
-    if (cdnUrl && isMounted) {
-      setImageUrl(cdnUrl)
-      setHasError(false)
-    } else if (isMounted) {
-      setImageUrl('')
-      setHasError(true)
+    const loadImage = async () => {
+      setIsLoading(true)
+      
+      const cdnUrl = getCDNImageUrl(productId, index)
+      
+      if (cdnUrl && isMounted) {
+        setImageUrl(cdnUrl)
+        setHasError(false)
+        setIsLoading(false)
+        return
+      }
+      
+      try {
+        let moyskladUrl = await getMoyskladImageUrl(productId)
+        
+        if (!moyskladUrl && isMounted) {
+          moyskladUrl = await getMoyskladVariantImageUrl(productId)
+        }
+        
+        if (moyskladUrl && isMounted) {
+          setImageUrl(moyskladUrl)
+          setHasError(false)
+        } else if (isMounted) {
+          setImageUrl('')
+          setHasError(true)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setImageUrl('')
+          setHasError(true)
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
     }
+
+    loadImage()
 
     return () => {
       isMounted = false
     }
   }, [productId, index])
 
-  const handleError = useCallback(() => {
-    setHasError(true)
-  }, [])
+  const handleError = useCallback(async () => {
+    try {
+      let moyskladUrl = await getMoyskladImageUrl(productId)
+      
+      if (!moyskladUrl) {
+        moyskladUrl = await getMoyskladVariantImageUrl(productId)
+      }
+      
+      if (moyskladUrl) {
+        setImageUrl(moyskladUrl)
+        setHasError(false)
+      } else {
+        setHasError(true)
+      }
+    } catch (error) {
+      setHasError(true)
+    }
+  }, [productId])
 
   if (hasError || !imageUrl) {
     return (

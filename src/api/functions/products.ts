@@ -13,23 +13,38 @@ export async function getProducts(offset: number, category: string) {
     try {
         const { changeIsPagination } = useCatalogStore.getState();
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`;
-        const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=20&offset=${offset}&expand=attributes`;
-
-        console.log(fullUrl);
+        
+        console.log('📦 [getProducts] Loading category:', category, 'offset:', offset);
 
         changeIsPagination(false, 0);
-        const response = await axios.get(fullUrl, {
-            headers: AUTH,
-        });
+        
+        const fullUrlInStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder};quantity>0&expand=attributes&limit=1000`;
+        const fullUrlOutOfStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder};quantity<=0&expand=attributes&limit=1000`;
+        
+        const [responseInStock, responseOutOfStock] = await Promise.all([
+            axios.get(fullUrlInStock, { headers: AUTH }),
+            axios.get(fullUrlOutOfStock, { headers: AUTH })
+        ]);
 
-        const rows = response.data.rows;
-        const size = response.data.meta.size;
+        const inStockRows = responseInStock.data.rows.filter(Boolean);
+        const outOfStockRows = responseOutOfStock.data.rows.filter(Boolean);
+        
+        const allRows = [...inStockRows, ...outOfStockRows];
+        const totalSize = allRows.length;
 
-        if (size > 20) {
-            changeIsPagination(true, size);
+        console.log('📊 [getProducts] Total:', totalSize, 'InStock:', inStockRows.length, 'OutOfStock:', outOfStockRows.length);
+
+        if (totalSize > 20) {
+            changeIsPagination(true, totalSize);
         }
 
-        return ProductDTO(rows.filter(Boolean));
+        const startIndex = offset;
+        const endIndex = offset + 20;
+        const paginatedRows = allRows.slice(startIndex, endIndex);
+
+        console.log('📄 [getProducts] Page:', startIndex, '-', endIndex, 'Items:', paginatedRows.length);
+
+        return ProductDTO(paginatedRows);
     } catch (error) {
         console.log("getProducts error:", error);
         return [];
@@ -55,11 +70,22 @@ export function getImage(productId: string, index: number = 0): string {
 }
 
 export async function searchProduct(name: string) {
-    const response = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=name~${name}&limit=20`, {
-        headers: AUTH
-    })
+    const urlInStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=name~${name};quantity>0&limit=50`;
+    const urlOutOfStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=name~${name};quantity<=0&limit=50`;
 
-    return ProductDTO(response.data.rows)
+    const [responseInStock, responseOutOfStock] = await Promise.all([
+        axios.get(urlInStock, { headers: AUTH }),
+        axios.get(urlOutOfStock, { headers: AUTH })
+    ]);
+
+    const inStockRows = responseInStock.data.rows.filter(Boolean);
+    const outOfStockRows = responseOutOfStock.data.rows.filter(Boolean);
+    
+    const allRows = [...inStockRows, ...outOfStockRows];
+    
+    console.log('🔍 [searchProduct] Query:', name, 'Total:', allRows.length, 'InStock:', inStockRows.length, 'OutOfStock:', outOfStockRows.length);
+
+    return ProductDTO(allRows);
 }
 
 export async function getProduct(id: string) {
@@ -123,10 +149,30 @@ export async function getProduct(id: string) {
 export async function getProductFromAtributes(id: string) {
     try {
         console.log('getProductFromAtributes:id=', id);
-        const url = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/${id}=true&limit=20&expand=attributes`;
+        
+        const urlInStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/${id}=true;quantity>0&expand=attributes&limit=1000`;
+        const urlOutOfStock = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/${id}=true;quantity<=0&expand=attributes&limit=1000`;
 
-        const response = await axios.get(url, { headers: AUTH });
-        return ProductDTO(response.data.rows.filter(Boolean));
+        const [responseInStock, responseOutOfStock] = await Promise.all([
+            axios.get(urlInStock, { headers: AUTH }),
+            axios.get(urlOutOfStock, { headers: AUTH })
+        ]);
+
+        const inStockRows = responseInStock.data.rows.filter(Boolean);
+        const outOfStockRows = responseOutOfStock.data.rows.filter(Boolean);
+        
+        const allRows = [...inStockRows, ...outOfStockRows];
+        
+        console.log('📊 [getProductFromAtributes] Total:', allRows.length, 'InStock:', inStockRows.length, 'OutOfStock:', outOfStockRows.length);
+
+        const products = ProductDTO(allRows);
+        
+        const isGreenPrices = id === '762d57da-1191-11ee-0a80-043600051b3e';
+        if (isGreenPrices) {
+            return products.map(p => ({ ...p, isGreenPrice: true }));
+        }
+        
+        return products;
     } catch (error) {
         console.error('getProductFromAtributes:error:', error);
         return [];

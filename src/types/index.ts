@@ -17,6 +17,7 @@ export type ProductType = {
     weight: number
     weighed: boolean
     stock?: number
+    isGreenPrice?: boolean
 }
 
 export type CartType = {

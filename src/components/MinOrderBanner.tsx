@@ -63,7 +63,7 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
         // 1. Проверка минимального заказа (приоритет)
         if (currentAmount < minOrderAmount) {
             const remaining = minOrderAmount - currentAmount;
-            return `До минимального заказа добавьте ещё ${formatPrice(remaining)} руб.`;
+            return `Минимальный заказ ${minOrderAmount} руб. Добавьте ещё товаров на ${formatPrice(remaining)} руб.`;
         }
 
         // 2. Только для доставки (не для самовывоза)
@@ -71,23 +71,23 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
             // 2a. Проверка порога 349 руб
             if (threshold349 > 0 && currentAmount < threshold349) {
                 const remaining = threshold349 - currentAmount;
-                return `Доставка ${currentPrice} руб., до снижения стоимости добавьте ещё ${formatPrice(remaining)} руб.`;
+                return `Доставка ${formatPrice(currentPrice)} руб., для снижения стоимости доставки до ${formatPrice(349)} руб. добавьте ещё ${formatPrice(remaining)} руб.`;
             }
 
             // 2b. Проверка бесплатной доставки
             if (thresholdFree > 0 && currentAmount < thresholdFree) {
                 const remaining = thresholdFree - currentAmount;
-                return `Доставка ${currentPrice} руб., до бесплатной доставки добавьте ещё ${formatPrice(remaining)} руб.`;
+                return `Доставка ${formatPrice(currentPrice)} руб., для бесплатной доставки добавьте ещё ${formatPrice(remaining)} руб.`;
             }
 
             // 2c. Бесплатная доставка достигнута
             if (currentAmount >= thresholdFree && thresholdFree > 0) {
-                return `🎉 Бесплатная доставка! Заказ: ${formatPrice(currentAmount)} руб.`;
+                return `🎉 Бесплатная доставка! Сумма товаров: ${formatPrice(currentAmount)} руб.`;
             }
         }
 
         // 3. Просто показываем сумму заказа
-        return `Заказ: ${formatPrice(currentAmount)} руб.`;
+        return `Сумма товаров: ${formatPrice(currentAmount)} руб.`;
     };
 
     const bannerText = getBannerText();

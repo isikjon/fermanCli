@@ -89,7 +89,7 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
                 <TouchBox isFull onClick={() => navigation.navigate("delivery")}>
                     <View style={styles.Box}>
                         {deliveryData ? (
-                            <Txt numberOfLines={2} size={14}>{fillDeliveryAddress()}</Txt>
+                            <Txt numberOfLines={1} size={14}>{fillDeliveryAddress()}</Txt>
                         ) : (
                             <Txt numberOfLines={1} size={14}>Адрес не выбран</Txt>
                         )}

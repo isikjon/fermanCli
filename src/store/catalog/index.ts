@@ -33,7 +33,7 @@ const useCatalogStore = create<CachedState>()(
             changeIsPagination: (value: boolean, size: number) => set({ isPagination: value, pages: Math.ceil(size / 20) }),
             setCategory: (categoryId: string) => set({ category: categoryId }),
             changeCategory: (value: string) => {
-                set({ category: value, activePage: 1 })
+                set({ category: value, activePage: 1, productsCache: {} })
             },
 
             clearProductsCache: () => {

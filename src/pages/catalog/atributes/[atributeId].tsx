@@ -5,6 +5,7 @@ import Sections from '../../../components/Sections';
 import useCatalogStore from '../../../store/catalog';
 import Back from '../../../ui/Back';
 import { RootStackParamList } from "../../../RootLayout";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type AtributeRouteProp = RouteProp<RootStackParamList, 'atributes'>;
 
@@ -12,6 +13,7 @@ const Atribute: React.FC = () => {
     const route = useRoute<AtributeRouteProp>();
     const navigation = useNavigation();
     const { id } = route.params;
+    const insets = useSafeAreaInsets();
 
     const { getDataFromAtributes } = useCatalogStore();
     const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +33,7 @@ const Atribute: React.FC = () => {
 
     return (
         <View style={styles.Container}>
-            <View style={styles.BackBox}>
+            <View style={[styles.BackBox, { paddingTop: Math.max(insets.top, 15) }]}>
                 <Back onClick={() => navigation.goBack()} />
             </View>
 
@@ -46,12 +48,12 @@ export default Atribute;
 
 const styles = StyleSheet.create({
     Container: {
-        paddingTop: 8,
         flex: 1,
         backgroundColor: '#fff',
     },
     BackBox: {
-        padding: 15,
+        paddingHorizontal: 15,
+        paddingBottom: 15,
     },
     Loader: {
         flex: 1,

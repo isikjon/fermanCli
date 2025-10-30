@@ -9,12 +9,14 @@ import { useNavigation } from '@react-navigation/native';
 import useGlobalStore from '../store';
 import Txt from '../ui/Text';
 import ContinueButton from '../ui/ContinueButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Delivery = () => {
     const navigation = useNavigation();
     const { getDelivery, deliveryData } = useDeliveryStore();
     const { setDeliverySet, isAuth, isDeliverySet } = useGlobalStore();
     const scrollRef = useRef<ScrollView>(null);
+    const insets = useSafeAreaInsets();
 
     useEffect(() => {
         getDelivery();
@@ -43,13 +45,20 @@ const Delivery = () => {
         <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} // если нужен отступ под header
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
-            <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: 20, minHeight: Dimensions.get('window').height * 1.1 }} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+                ref={scrollRef} 
+                contentContainerStyle={{ 
+                    paddingBottom: Math.max(insets.bottom + 100, 120), 
+                    minHeight: Dimensions.get('window').height * 1.1 
+                }} 
+                keyboardShouldPersistTaps="handled"
+            >
                 <View style={{ minHeight: Dimensions.get('window').height * 1.1 }}>
                     <FullLogo />
                     {!isDeliveryRequired && (
-                        <View style={styles.BackBox}>
+                        <View style={[styles.BackBox, { paddingTop: Math.max(insets.top, 15) }]}>
                             <Back onClick={handleBack} />
                         </View>
                     )}
@@ -66,7 +75,7 @@ const Delivery = () => {
                         labels={['Доставка', 'Самовывоз']}
                         tabs={[<Sections.Delivery.Address scrollRef={scrollRef} />, <Sections.Delivery.SelfPickup />]}
                     />
-                    <View style={styles.ButtonContainer}>
+                    <View style={[styles.ButtonContainer, { marginBottom: Math.max(insets.bottom + 20, 40) }]}>
                         <ContinueButton 
                             buttonHeight={56} 
                             onPress={handleContinue}
@@ -93,12 +102,12 @@ const styles = StyleSheet.create({
         paddingBottom: 70,
     },
     BackBox: {
-        padding: 15,
+        paddingHorizontal: 15,
+        paddingBottom: 15,
     },
     ButtonContainer: {
         paddingHorizontal: 16,
         marginTop: 20,
-        marginBottom: 20,
         width: '100%',
     },
     InfoBox: {

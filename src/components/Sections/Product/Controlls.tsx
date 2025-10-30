@@ -57,8 +57,13 @@ const Controlls = () => {
     if (!activeProduct) return null
 
     const maxStock = activeProduct.stock
+    const isOutOfStock = maxStock !== undefined && maxStock <= 0
 
     const totalPrice = formatPrice(activeProduct.price * (activeProduct.weighed ? weightAmount : 1))
+
+    const buttonBackground = isOutOfStock ? "#CCCCCC" : (inCart ? "#EEEEEE" : "#4FBD01")
+    const buttonText = isOutOfStock ? "Нет в наличии" : (inCart ? "В корзине" : "В корзину")
+    const buttonTextColor = isOutOfStock ? "#666666" : (inCart ? "#4D4D4D" : "#fff")
 
     return (
         <View style={styles.Box}>
@@ -93,11 +98,17 @@ const Controlls = () => {
                     sign={activeProduct.weighed ? "кг" : ""}
                     max={maxStock}
                     isNotFull
+                    disabled={isOutOfStock}
                 />
                 <View style={styles.FlexBox}>
                     <Button
                         onClick={() => {
                             if (activeProduct) {
+                                if (isOutOfStock) {
+                                    setMessage('Товар отсутствует в наличии', 'error')
+                                    return
+                                }
+
                                 const cartData = cartList.find(i => i.id === activeProduct.id)
                                 const currentInCart = activeProduct.weighed 
                                     ? (cartData?.weight || 0)
@@ -132,11 +143,12 @@ const Controlls = () => {
                                 clearSelectedAmount(activeProduct.id)
                             }
                         }}
-                        background={inCart ? "#EEEEEE" : "#4FBD01"}
+                        background={buttonBackground}
                         height={56}
+                        disabled={isOutOfStock}
                     >
-                        <Txt color={inCart ? "#4D4D4D" : "#fff"} weight='RobotoCondensed-Bold' size={18}>
-                            {inCart ? "В корзине" : "В корзину"}
+                        <Txt color={buttonTextColor} weight='RobotoCondensed-Bold' size={18}>
+                            {buttonText}
                         </Txt>
                     </Button>
                 </View>
