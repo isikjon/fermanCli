@@ -151,13 +151,21 @@ const useCatalogStore = create<CachedState>()(
                 try {
                     const { isLoading: currentlyLoading } = get()
                     if (currentlyLoading) {
+                        console.log('⏳ [getDataFromAtributes] Already loading, skipping...')
                         return
                     }
+                    
+                    console.log('🔄 [getDataFromAtributes] START - Attribute ID:', id)
                     
                     const startTime = Date.now()
                     set({ isLoading: true })
                     
                     const response = await api.products.getProductFromAtributes(id)
+                    
+                    console.log('📥 [getDataFromAtributes] Response from API:', {
+                        productsCount: response?.length || 0,
+                        isArray: Array.isArray(response)
+                    })
                     
                     const elapsed = Date.now() - startTime
                     const minLoadTime = 500
@@ -165,9 +173,12 @@ const useCatalogStore = create<CachedState>()(
                         await new Promise(resolve => setTimeout(resolve, minLoadTime - elapsed))
                     }
                     
+                    console.log('💾 [getDataFromAtributes] Setting productWithAtrList with', response?.length || 0, 'products')
                     set({ isLoading: false, productWithAtrList: response })
+                    
+                    console.log('✅ [getDataFromAtributes] COMPLETE')
                 } catch (error) {
-                    console.log(error)
+                    console.error('❌ [getDataFromAtributes] ERROR:', error)
                     set({ isLoading: false })
                 }
             },

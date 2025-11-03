@@ -71,7 +71,9 @@ const Form = () => {
                             <Txt size={20} weight='Bold'>Персональная доставка</Txt>
                             <Txt>по согласованию с менеджером в удобное для вас вечернее время</Txt>
                         </View>
-                        <Toggle checked={express} onChange={value => setExpress(value)} />
+                        <View style={styles.ToggleWrapper}>
+                            <Toggle checked={express} onChange={value => setExpress(value)} />
+                        </View>
                     </Row>
                 </>
             }
@@ -224,5 +226,8 @@ const styles = StyleSheet.create({
     },
     ProductList: {
         gap: 16
+    },
+    ToggleWrapper: {
+        marginRight: 8
     }
 })

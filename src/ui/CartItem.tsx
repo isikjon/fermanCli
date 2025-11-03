@@ -59,6 +59,14 @@ const CartItem: FC<Props> = ({ item }) => {
     }, [item.id, removeItemFromCart])
 
     const handleCounterChange = useCallback((value: number) => {
+        console.log('🔄 [CartItem] Counter changed:', {
+            id: item.id,
+            name: item.name?.substring(0, 30) || 'Unknown',
+            oldValue: item.isWeighted ? weight : amount,
+            newValue: value,
+            isWeighted: item.isWeighted
+        });
+
         if (item.isWeighted) {
             setWeight(value)
             changeCartItem(item.id, { ...item, weight: value })
@@ -66,7 +74,7 @@ const CartItem: FC<Props> = ({ item }) => {
             setAmount(value)
             changeCartItem(item.id, { ...item, amount: value })
         }
-    }, [item, changeCartItem])
+    }, [item, changeCartItem, weight, amount])
 
     return (
         <View style={styles.CartItem}>

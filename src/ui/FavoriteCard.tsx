@@ -17,7 +17,8 @@ interface Props {
 const FavoriteCard: FC<Props> = ({ item }) => {
     const navigation = useNavigation()
     const cartList = useCartStore(state => state.cartList)
-    const addItemToCart = useCartStore(state => state.addItemToCart)
+    const setItemInCart = useCartStore(state => state.setItemInCart)
+    const removeItemFromCart = useCartStore(state => state.removeItemFromCart)
     const removeItemFromFav = useFavoriteStore(state => state.removeItemFromFav)
     
     const inCart = useMemo(() => 
@@ -51,13 +52,28 @@ const FavoriteCard: FC<Props> = ({ item }) => {
     const handleAddToCart = useCallback(() => {
         const { setMessage } = require('../store/notification').default.getState()
         
+        if (inCart) {
+            removeItemFromCart(item.id)
+            setMessage('Товар удалён из корзины', 'success')
+            return
+        }
+        
         if (isOutOfStock) {
             setMessage('Товар отсутствует в наличии', 'error')
             return
         }
         
-        addItemToCart({ amount: 1, ...item })
-    }, [item, addItemToCart, isOutOfStock])
+        setItemInCart({ 
+            amount: item.isWeighted ? 1 : 1,
+            id: item.id,
+            image: item.image,
+            name: item.name,
+            price: item.price,
+            isWeighted: item.isWeighted,
+            weight: item.isWeighted ? (item.weight || 0.1) : undefined,
+            stock: item.stock
+        })
+    }, [item, setItemInCart, removeItemFromCart, isOutOfStock, inCart])
 
     const buttonBackground = useMemo(() => {
         if (isOutOfStock) return "#CCCCCC"
@@ -110,7 +126,7 @@ const FavoriteCard: FC<Props> = ({ item }) => {
                     <Button 
                         onClick={handleAddToCart}
                         background={buttonBackground}
-                        disabled={isOutOfStock}
+                        disabled={isOutOfStock && !inCart}
                     >
                         <Txt 
                             color={buttonTextColor} 

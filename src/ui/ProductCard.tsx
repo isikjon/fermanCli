@@ -18,7 +18,9 @@ interface Props {
 
 const ProductCard: FC<Props> = ({ item, width }) => {
     const navigation = useNavigation()
-    const addItemToCart = useCartStore(state => state.addItemToCart)
+    const setItemInCart = useCartStore(state => state.setItemInCart)
+    const removeItemFromCart = useCartStore(state => state.removeItemFromCart)
+    const changeCartItem = useCartStore(state => state.changeCartItem)
     const cartList = useCartStore(state => state.cartList)
     const { deliveryData } = useDeliveryStore()
     
@@ -30,20 +32,45 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const inCart = !!cartItem
     const initialAmount = useMemo(() => {
         if (cartItem) {
-            return item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
+            const amt = item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
+            console.log('📦 [ProductCard] Initial amount from cart:', {
+                id: item.id,
+                name: item.name.substring(0, 30),
+                amount: amt,
+                isWeighed: item.weighed
+            });
+            return amt
         }
+        console.log('📦 [ProductCard] Initial amount (not in cart):', {
+            id: item.id,
+            name: item.name.substring(0, 30),
+            amount: item.weighed ? 0.1 : 1
+        });
         return item.weighed ? 0.1 : 1
-    }, [cartItem, item.weighed])
+    }, [cartItem, item.weighed, item.id, item.name])
     
     const [amount, setAmount] = useState(initialAmount)
 
-    // Синхронизируем amount с корзиной
     useEffect(() => {
         if (cartItem) {
             const newAmount = item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
+            console.log('📦 [ProductCard] Syncing amount from cart:', {
+                id: item.id,
+                name: item.name.substring(0, 30),
+                oldAmount: amount,
+                newAmount: newAmount
+            });
             setAmount(newAmount)
+        } else {
+            const resetAmount = item.weighed ? 0.1 : 1
+            console.log('📦 [ProductCard] Resetting amount (not in cart):', {
+                id: item.id,
+                name: item.name.substring(0, 30),
+                resetTo: resetAmount
+            });
+            setAmount(resetAmount)
         }
-    }, [cartItem, item.weighed])
+    }, [cartItem, item.weighed, item.id, item.name])
 
     const isGreenPrice = useMemo(() => item.isGreenPrice === true, [item.isGreenPrice])
     const isSelfPickup = useMemo(() => deliveryData?.type === 1, [deliveryData?.type])
@@ -77,22 +104,46 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const handleAddToCart = useCallback(() => {
         const { setMessage } = require('../store/notification').default.getState()
         
+        console.log('➕ [ProductCard] Add to cart button clicked:', {
+            id: item.id,
+            name: item.name.substring(0, 30),
+            amount: amount,
+            inCart: inCart,
+            isOutOfStock: isOutOfStock
+        });
+
         if (isGreenPriceBlockedBySelfPickup) {
+            console.log('❌ [ProductCard] Blocked: Green price with self-pickup');
             setMessage('Зелёные ценники доступны только при доставке!', 'error')
             return
         }
         
+        if (inCart) {
+            console.log('🗑️ [ProductCard] Removing from cart (already in cart)');
+            removeItemFromCart(item.id)
+            setMessage('Товар удалён из корзины', 'success')
+            return
+        }
+        
         if (isOutOfStock) {
+            console.log('❌ [ProductCard] Blocked: Out of stock');
             setMessage('Товар отсутствует в наличии', 'error')
             return
         }
         
         if (item.stock !== undefined && amount > item.stock) {
+            console.log('❌ [ProductCard] Blocked: Not enough stock', { amount, stock: item.stock });
             setMessage('На складе недостаточно товара', 'error')
             return
         }
         
-        addItemToCart({
+        console.log('✅ [ProductCard] Adding to cart:', {
+            amount: item.weighed ? 1 : amount,
+            weight: item.weighed ? amount : undefined,
+            isWeighted: item.weighed
+        });
+
+        setItemInCart({
             amount: item.weighed ? 1 : amount,
             id: item.id,
             image: item.image,
@@ -102,15 +153,33 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             weight: item.weighed ? amount : undefined,
             stock: item.stock
         })
-    }, [item, amount, addItemToCart, isOutOfStock, isGreenPriceBlockedBySelfPickup, discountedPrice])
+    }, [item, amount, setItemInCart, removeItemFromCart, isOutOfStock, inCart, isGreenPriceBlockedBySelfPickup, discountedPrice])
     
     const handleProductPress = useCallback(() => {
         navigation.navigate('product' as never, { id: item.id } as never)
     }, [item.id, navigation])
     
     const handleAmountChange = useCallback((value: number) => {
-        setAmount(roundAmount(value, item.weighed))
-    }, [item.weighed])
+        const roundedValue = roundAmount(value, item.weighed)
+        console.log('🔄 [ProductCard] Amount changed:', {
+            id: item.id,
+            name: item.name.substring(0, 30),
+            oldAmount: amount,
+            newAmount: roundedValue,
+            inCart: inCart
+        });
+
+        setAmount(roundedValue)
+
+        if (inCart && cartItem) {
+            console.log('🔄 [ProductCard] Updating cart directly (item already in cart)');
+            if (item.weighed) {
+                changeCartItem(item.id, { ...cartItem, weight: roundedValue })
+            } else {
+                changeCartItem(item.id, { ...cartItem, amount: roundedValue })
+            }
+        }
+    }, [item.weighed, item.id, item.name, amount, inCart, cartItem, changeCartItem])
 
     const buttonBackground = useMemo(() => {
         if (isGreenPriceBlockedBySelfPickup) return "#CCCCCC"
@@ -185,7 +254,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                 <Button
                     onClick={handleAddToCart}
                     background={buttonBackground}
-                    disabled={isOutOfStock || isGreenPriceBlockedBySelfPickup}
+                    disabled={(isOutOfStock && !inCart) || isGreenPriceBlockedBySelfPickup}
                 >
                     <Txt color={buttonTextColor} weight='RobotoCondensed-Bold' size={18}>
                         {buttonText}
