@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native'
 import React, { FC, useCallback, useEffect, useState, useMemo, memo } from 'react'
 import Txt from './Text'
 import Counter from './Counter'
@@ -202,6 +202,16 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         return "#fff"
     }, [isGreenPriceBlockedBySelfPickup, isOutOfStock, inCart])
 
+    const screenWidth = Dimensions.get('window').width
+    const isSmallScreen = screenWidth < 360
+    
+    const buttonTextSize = useMemo(() => {
+        if (isGreenPriceBlockedBySelfPickup) {
+            return isSmallScreen ? 13 : 15
+        }
+        return 18
+    }, [isGreenPriceBlockedBySelfPickup, isSmallScreen])
+
     return (
         <TouchableOpacity
             style={styles.Item}
@@ -256,7 +266,7 @@ const ProductCard: FC<Props> = ({ item, width }) => {
                     background={buttonBackground}
                     disabled={(isOutOfStock && !inCart) || isGreenPriceBlockedBySelfPickup}
                 >
-                    <Txt color={buttonTextColor} weight='RobotoCondensed-Bold' size={18}>
+                    <Txt color={buttonTextColor} weight='RobotoCondensed-Bold' size={buttonTextSize}>
                         {buttonText}
                     </Txt>
                 </Button>

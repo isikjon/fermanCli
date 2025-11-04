@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import Row from '../../../components/Row'
@@ -38,6 +38,9 @@ const Form = () => {
     const minOrderAmount = 600
     const currentAmount = calculateAmount()
     const isOrderDisabled = cartList.length === 0 || currentAmount < minOrderAmount
+    
+    const screenWidth = Dimensions.get('window').width
+    const isSmallScreen = screenWidth < 360
 
     function fillDeliveryAddress() {
         if (deliveryData?.type === 0) {
@@ -65,17 +68,28 @@ const Form = () => {
         <View style={styles.Form}>
             {/* Персональная доставка */}
             {deliveryData?.type === 0 && ["Эгершельд", "Заря", "Чкалова"].includes(zoneName ? zoneName?.description : "")
-                && <>
-                    <Row>
-                        <View style={styles.Group}>
-                            <Txt size={20} weight='Bold'>Персональная доставка</Txt>
-                            <Txt>по согласованию с менеджером в удобное для вас вечернее время</Txt>
+                && (
+                    <View style={[
+                        styles.PersonalDeliveryContainer,
+                        isSmallScreen && styles.PersonalDeliveryContainerSmall
+                    ]}>
+                        <View style={[
+                            styles.PersonalDeliveryText,
+                            isSmallScreen && styles.PersonalDeliveryTextSmall
+                        ]}>
+                            <Txt size={isSmallScreen ? 18 : 20} weight='Bold'>Персональная доставка</Txt>
+                            <Txt size={isSmallScreen ? 13 : 14}>
+                                по согласованию с менеджером в удобное для вас вечернее время
+                            </Txt>
                         </View>
-                        <View style={styles.ToggleWrapper}>
+                        <View style={[
+                            styles.PersonalDeliveryToggle,
+                            isSmallScreen && styles.PersonalDeliveryToggleSmall
+                        ]}>
                             <Toggle checked={express} onChange={value => setExpress(value)} />
                         </View>
-                    </Row>
-                </>
+                    </View>
+                )
             }
 
             {/* Адрес доставки/самовывоза */}
@@ -227,7 +241,32 @@ const styles = StyleSheet.create({
     ProductList: {
         gap: 16
     },
-    ToggleWrapper: {
+    PersonalDeliveryContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 12
+    },
+    PersonalDeliveryContainerSmall: {
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 16
+    },
+    PersonalDeliveryText: {
+        flex: 1,
+        gap: 4
+    },
+    PersonalDeliveryTextSmall: {
+        flex: 0
+    },
+    PersonalDeliveryToggle: {
+        marginTop: 4,
         marginRight: 8
+    },
+    PersonalDeliveryToggleSmall: {
+        alignSelf: 'flex-start',
+        marginTop: 0,
+        marginRight: 0,
+        marginLeft: 0
     }
 })

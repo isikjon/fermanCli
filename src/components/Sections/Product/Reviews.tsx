@@ -1,11 +1,79 @@
-import { StyleSheet, View } from 'react-native'
-import React from 'react'
+import { StyleSheet, View, Share } from 'react-native'
+import React, { useCallback } from 'react'
 import TouchBox from '../../../components/TouchBox'
 import Icons from '../../../ui/Icons'
 import Txt from '../../../ui/Text'
 import Row from '../../../components/Row'
+import useCatalogStore from '../../../store/catalog'
+import useNotificationStore from '../../../store/notification'
 
 const Reviews = () => {
+    const { activeProduct } = useCatalogStore()
+    const { setMessage } = useNotificationStore()
+
+    const handleShare = useCallback(async () => {
+        console.log('🔘 [Reviews Share] ========== КНОПКА ПОДЕЛИТЬСЯ НАЖАТА ==========')
+        console.log('🔘 [Reviews Share] Время:', new Date().toISOString())
+        
+        console.log('📋 [Reviews Share] Проверка activeProduct:', {
+            exists: !!activeProduct,
+            productId: activeProduct?.id,
+            productName: activeProduct?.name,
+            price: activeProduct?.price,
+            weighed: activeProduct?.weighed
+        })
+
+        if (!activeProduct) {
+            console.error('❌ [Reviews Share] ОШИБКА: activeProduct не найден!')
+            setMessage('Товар не загружен', 'error')
+            return
+        }
+
+        try {
+            console.log('📝 [Reviews Share] Формирование сообщения...')
+            const shareMessage = `${activeProduct.name}\n\n💰 Цена: ${activeProduct.price} руб.${activeProduct.weighed ? ' / кг' : ''}\n\n🛒 Закажи в Бурёнка - магазин фермерских продуктов`
+            
+            console.log('📤 [Reviews Share] Сообщение для sharing:', shareMessage)
+            console.log('📤 [Reviews Share] Вызов Share.share()...')
+            
+            const result = await Share.share({
+                message: shareMessage,
+                title: activeProduct.name
+            })
+
+            console.log('📥 [Reviews Share] Результат Share.share():', {
+                action: result.action,
+                activityType: result.activityType,
+                sharedAction: Share.sharedAction,
+                dismissedAction: Share.dismissedAction
+            })
+
+            if (result.action === Share.sharedAction) {
+                console.log('✅ [Reviews Share] Успешно поделились!')
+                if (result.activityType) {
+                    console.log('📱 [Reviews Share] Использован канал:', result.activityType)
+                    setMessage('Спасибо за то, что делитесь!', 'success')
+                } else {
+                    console.log('📱 [Reviews Share] Поделились (канал неизвестен)')
+                    setMessage('Спасибо за то, что делитесь!', 'success')
+                }
+            } else if (result.action === Share.dismissedAction) {
+                console.log('❌ [Reviews Share] Пользователь отменил sharing')
+            } else {
+                console.log('⚠️ [Reviews Share] Неизвестный результат action:', result.action)
+            }
+            
+            console.log('🔘 [Reviews Share] ========== ОБРАБОТКА ЗАВЕРШЕНА ==========')
+        } catch (error: any) {
+            console.error('❌ [Reviews Share] ========== ПРОИЗОШЛА ОШИБКА ==========')
+            console.error('❌ [Reviews Share] Тип ошибки:', typeof error)
+            console.error('❌ [Reviews Share] Ошибка:', error)
+            console.error('❌ [Reviews Share] Сообщение ошибки:', error?.message)
+            console.error('❌ [Reviews Share] Stack trace:', error?.stack)
+            setMessage('Не удалось поделиться товаром', 'error')
+        }
+    }, [activeProduct, setMessage])
+
     return (
         <View style={styles.Box}>
             <Row gap={16}>
@@ -18,7 +86,10 @@ const Reviews = () => {
                     </View>
                 </TouchBox>
 
-                <TouchBox height={56}>
+                <TouchBox height={56} onClick={() => {
+                    console.log('🖱️ [Reviews] TouchBox для Share был нажат!')
+                    handleShare()
+                }}>
                     <Icons.Share width={24} height={24} />
                 </TouchBox>
             </Row>
