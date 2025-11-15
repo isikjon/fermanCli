@@ -4,8 +4,15 @@ import { create } from 'zustand'
 import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { imagePreloader } from '../../utils/imageBatchPreloader'
+import useDeliveryStore from '../delivery'
+import { resolveStoreQueueFromDelivery } from '../../utils/storePriority'
 
 const imageUrlCache: Record<string, string> = {}
+
+const resolveStoreQueue = () => {
+    const { deliveryData, addresses } = useDeliveryStore.getState()
+    return resolveStoreQueueFromDelivery(deliveryData, addresses)
+}
 
 const useCatalogStore = create<CachedState>()(
     persist(
@@ -84,7 +91,8 @@ const useCatalogStore = create<CachedState>()(
                     return
                 }
 
-                const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId)
+                const storeQueue = resolveStoreQueue()
+                const response = await api.products.getProducts((activePage - 1) * 20, category || catalogId, storeQueue)
                 set((state) => ({
                     productList: response,
                     productsCache: { ...state.productsCache, [key]: response },
@@ -120,7 +128,8 @@ const useCatalogStore = create<CachedState>()(
                     return
                 }
 
-                const response = await api.products.searchProduct(name)
+                const storeQueue = resolveStoreQueue()
+                const response = await api.products.searchProduct(name, storeQueue)
                 set((state) => ({
                     searchList: response,
                     searchCache: { ...state.searchCache, [name]: response },
@@ -132,7 +141,8 @@ const useCatalogStore = create<CachedState>()(
                     const { getImage } = get()
                     set({ isLoading: true, activeProductImage: null, activeProduct: null })
 
-                    const response = await api.products.getProduct(id)
+                    const storeQueue = resolveStoreQueue()
+                    const response = await api.products.getProduct(id, storeQueue)
 
                     set({
                         isLoading: false,
@@ -160,7 +170,8 @@ const useCatalogStore = create<CachedState>()(
                     const startTime = Date.now()
                     set({ isLoading: true })
                     
-                    const response = await api.products.getProductFromAtributes(id)
+                    const storeQueue = resolveStoreQueue()
+                    const response = await api.products.getProductFromAtributes(id, storeQueue)
                     
                     console.log('📥 [getDataFromAtributes] Response from API:', {
                         productsCount: response?.length || 0,

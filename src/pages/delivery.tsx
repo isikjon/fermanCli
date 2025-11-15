@@ -1,5 +1,6 @@
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, Dimensions } from 'react-native';
-import React, { useEffect, useRef } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import FullLogo from '../assets/FullLogo';
 import Tabs from '../components/Tabs';
 import Sections from '../components/Sections';
@@ -9,7 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 import useGlobalStore from '../store';
 import Txt from '../ui/Text';
 import ContinueButton from '../ui/ContinueButton';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Delivery = () => {
     const navigation = useNavigation();
@@ -17,6 +17,8 @@ const Delivery = () => {
     const { setDeliverySet, isAuth, isDeliverySet } = useGlobalStore();
     const scrollRef = useRef<ScrollView>(null);
     const insets = useSafeAreaInsets();
+    const topPadding = useMemo(() => Math.max(insets.top, 16), [insets.top]);
+    const bottomPadding = useMemo(() => Math.max(insets.bottom + 32, 48), [insets.bottom]);
 
     useEffect(() => {
         getDelivery();
@@ -42,26 +44,25 @@ const Delivery = () => {
     const isDeliveryRequired = isAuth && !isDeliverySet;
 
     return (
+        <SafeAreaView style={styles.SafeArea}>
         <KeyboardAvoidingView
-            style={{ flex: 1 }}
+                style={styles.Keyboard}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
             <ScrollView 
                 ref={scrollRef} 
-                contentContainerStyle={{ 
-                    paddingBottom: Math.max(insets.bottom + 100, 120), 
-                    minHeight: Dimensions.get('window').height * 1.1 
-                }} 
+                    style={styles.Scroll}
+                    contentContainerStyle={[styles.ScrollContent, { paddingBottom: bottomPadding }]}
                 keyboardShouldPersistTaps="handled"
             >
-                <View style={{ minHeight: Dimensions.get('window').height * 1.1 }}>
-                    <FullLogo />
+                    <View style={[styles.Content, { paddingTop: topPadding }]}>
                     {!isDeliveryRequired && (
-                        <View style={[styles.BackBox, { paddingTop: Math.max(insets.top, 15) }]}>
+                            <View style={styles.BackBox}>
                             <Back onClick={handleBack} />
                         </View>
                     )}
+                        <FullLogo compact />
                     <View style={styles.InfoBox}>
                         <Txt size={18} weight="Bold" style={styles.InfoTitle}>
                             Выберите способ получения заказа
@@ -75,7 +76,7 @@ const Delivery = () => {
                         labels={['Доставка', 'Самовывоз']}
                         tabs={[<Sections.Delivery.Address scrollRef={scrollRef} />, <Sections.Delivery.SelfPickup />]}
                     />
-                    <View style={[styles.ButtonContainer, { marginBottom: Math.max(insets.bottom + 20, 40) }]}>
+                        <View style={styles.ButtonContainer}>
                         <ContinueButton 
                             buttonHeight={56} 
                             onPress={handleContinue}
@@ -89,34 +90,44 @@ const Delivery = () => {
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
 export default Delivery;
 
 const styles = StyleSheet.create({
-    Container: {
+    SafeArea: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 8,
-        paddingBottom: 70,
+    },
+    Keyboard: {
+        flex: 1,
+    },
+    Scroll: {
+        flex: 1,
+    },
+    ScrollContent: {
+        flexGrow: 1,
+    },
+    Content: {
+        flexGrow: 1,
+        gap: 20,
+        paddingHorizontal: 16,
+        paddingBottom: '30%',
     },
     BackBox: {
-        paddingHorizontal: 15,
-        paddingBottom: 15,
-    },
-    ButtonContainer: {
-        paddingHorizontal: 16,
-        marginTop: 20,
-        width: '100%',
+        marginBottom: 12,
     },
     InfoBox: {
-        padding: 15,
+        gap: 8,
     },
     InfoTitle: {
-        marginBottom: 5,
     },
     InfoText: {
         opacity: 0.7,
+    },
+    ButtonContainer: {
+        marginTop: 16,
     },
 });

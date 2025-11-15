@@ -146,9 +146,8 @@ const Controlls = () => {
                                 });
 
                                 if (inCart) {
-                                    console.log('🗑️ [Controlls] Removing from cart');
-                                    removeItemFromCart(activeProduct.id)
-                                    setMessage('Товар удалён из корзины', 'success')
+                                    console.log('🛒 [Controlls] Navigating to cart (item already in cart)');
+                                    navigation.navigate('cart' as never)
                                     return
                                 }
                                 

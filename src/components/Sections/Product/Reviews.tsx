@@ -6,6 +6,7 @@ import Txt from '../../../ui/Text'
 import Row from '../../../components/Row'
 import useCatalogStore from '../../../store/catalog'
 import useNotificationStore from '../../../store/notification'
+import { generateShareMessage, generateShareUrl } from '../../../utils/shareProduct'
 
 const Reviews = () => {
     const { activeProduct } = useCatalogStore()
@@ -30,14 +31,17 @@ const Reviews = () => {
         }
 
         try {
-            console.log('📝 [Reviews Share] Формирование сообщения...')
-            const shareMessage = `${activeProduct.name}\n\n💰 Цена: ${activeProduct.price} руб.${activeProduct.weighed ? ' / кг' : ''}\n\n🛒 Закажи в Бурёнка - магазин фермерских продуктов`
+            console.log('📝 [Reviews Share] Формирование сообщения и ссылки...')
+            const shareMessage = generateShareMessage(activeProduct)
+            const shareUrl = generateShareUrl(activeProduct)
             
             console.log('📤 [Reviews Share] Сообщение для sharing:', shareMessage)
+            console.log('🔗 [Reviews Share] Ссылка на продукт:', shareUrl)
             console.log('📤 [Reviews Share] Вызов Share.share()...')
             
             const result = await Share.share({
                 message: shareMessage,
+                url: shareUrl,
                 title: activeProduct.name
             })
 

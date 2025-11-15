@@ -8,6 +8,7 @@ import { IFavorite } from '../../../types'
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native'
 import OptimizedImage from '../../../ui/OptimizedImage'
 import useNotificationStore from '../../../store/notification'
+import { generateShareMessage, generateShareUrl } from '../../../utils/shareProduct'
 
 const Preview = () => {
     const { activeProduct } = useCatalogStore()
@@ -44,14 +45,17 @@ const Preview = () => {
         }
 
         try {
-            console.log('📝 [Share] Формирование сообщения...')
-            const shareMessage = `${activeProduct.name}\n\n💰 Цена: ${activeProduct.price} руб.${activeProduct.weighed ? ' / кг' : ''}\n\n🛒 Закажи в Бурёнка - магазин фермерских продуктов`
+            console.log('📝 [Share] Формирование сообщения и ссылки...')
+            const shareMessage = generateShareMessage(activeProduct)
+            const shareUrl = generateShareUrl(activeProduct)
             
             console.log('📤 [Share] Сообщение для sharing:', shareMessage)
+            console.log('🔗 [Share] Ссылка на продукт:', shareUrl)
             console.log('📤 [Share] Вызов Share.share()...')
             
             const result = await Share.share({
                 message: shareMessage,
+                url: shareUrl,
                 title: activeProduct.name
             })
 
@@ -98,7 +102,9 @@ const Preview = () => {
             price: activeProduct.price,
             isWeighted: activeProduct.weighed,
             weight: 0.1,
-            stock: activeProduct.stock
+            stock: activeProduct.stock,
+            stockByStore: activeProduct.stockByStore,
+            storeId: activeProduct.storeId
         }
 
         if (isExist) {

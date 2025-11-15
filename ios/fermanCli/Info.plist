@@ -55,5 +55,16 @@
 		<string>RobotoCondensed-Bold.ttf</string>
 		<string>RobotoCondensed-Regular.ttf</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>burenka</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>ru.ferma-dv.burenka</string>
+		</dict>
+	</array>
 </dict>
 </plist>

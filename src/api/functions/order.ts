@@ -47,12 +47,18 @@ export const createOrder = async (data: IOrder) => {
     try {
         const payload = orderPayload(data)
         console.log('🌐 [API createOrder] Payload:', JSON.stringify(payload, null, 2))
+        console.log('📋 [API createOrder] Project:', payload.project)
+        console.log('🏷️ [API createOrder] Tags:', payload.tags)
 
         const response = await axios.post("https://api.moysklad.ru/api/remap/1.2/entity/customerorder", payload, {
             headers: AUTH
         })
 
         console.log('✅ [API createOrder] SUCCESS:', response.data)
+        console.log('📋 [API createOrder] Created order name:', response.data.name)
+        console.log('🏷️ [API createOrder] Created order tags:', response.data.tags)
+        console.log('📋 [API createOrder] Created order project:', response.data.project)
+        
         return response
     } catch (error: any) {
         console.log('❌ [API createOrder] ERROR:', error)

@@ -14,7 +14,7 @@ type RootStackParamList = {
 
 type ListItem = {
     key: string
-    type: 'header' | 'banners' | 'back' | 'categories' | 'list'
+    type: 'header' | 'back' | 'categories' | 'list'
 }
 
 const CatalogDetails = () => {
@@ -58,7 +58,6 @@ const CatalogDetails = () => {
 
     const data: ListItem[] = [
         { key: 'header', type: 'header' },
-        { key: 'banners', type: 'banners' },
         { key: 'back', type: 'back' },
         { key: 'categories', type: 'categories' },
         { key: 'list', type: 'list' },
@@ -67,9 +66,7 @@ const CatalogDetails = () => {
     const renderItem: ListRenderItem<ListItem> = ({ item }) => {
         switch (item.type) {
             case 'header':
-                return <Header />
-            case 'banners':
-                return <Sections.Catalog.Banners />
+                return <Header showBanners />
             case 'back':
                 return (
                     <View style={styles.BackBox}>

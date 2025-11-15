@@ -28,6 +28,11 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         cartList.find(i => i.id === item.id), 
         [cartList, item.id]
     )
+
+    const cartStoreId = useMemo(() => {
+        const stored = cartList.find(i => i.storeId)
+        return stored?.storeId || null
+    }, [cartList])
     
     const inCart = !!cartItem
     const initialAmount = useMemo(() => {
@@ -112,6 +117,18 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             isOutOfStock: isOutOfStock
         });
 
+        if (cartStoreId && item.storeId && cartStoreId !== item.storeId) {
+            console.log('❌ [ProductCard] Blocked: store mismatch', { cartStoreId, itemStoreId: item.storeId })
+            setMessage('Этот товар доступен на другом складе. Завершите текущий заказ или очистите корзину.', 'error')
+            return
+        }
+
+        if (cartStoreId && !item.storeId) {
+            console.log('❌ [ProductCard] Blocked: item without store for existing cart store', { cartStoreId })
+            setMessage('Не удалось определить склад для товара. Попробуйте обновить список или оформить отдельный заказ.', 'error')
+            return
+        }
+
         if (isGreenPriceBlockedBySelfPickup) {
             console.log('❌ [ProductCard] Blocked: Green price with self-pickup');
             setMessage('Зелёные ценники доступны только при доставке!', 'error')
@@ -119,9 +136,8 @@ const ProductCard: FC<Props> = ({ item, width }) => {
         }
         
         if (inCart) {
-            console.log('🗑️ [ProductCard] Removing from cart (already in cart)');
-            removeItemFromCart(item.id)
-            setMessage('Товар удалён из корзины', 'success')
+            console.log('🛒 [ProductCard] Navigating to cart (item already in cart)');
+            navigation.navigate('cart' as never)
             return
         }
         
@@ -151,9 +167,11 @@ const ProductCard: FC<Props> = ({ item, width }) => {
             price: discountedPrice,
             isWeighted: item.weighed,
             weight: item.weighed ? amount : undefined,
-            stock: item.stock
+            stock: item.stock,
+            stockByStore: item.stockByStore,
+            storeId: item.storeId
         })
-    }, [item, amount, setItemInCart, removeItemFromCart, isOutOfStock, inCart, isGreenPriceBlockedBySelfPickup, discountedPrice])
+    }, [item, amount, setItemInCart, removeItemFromCart, isOutOfStock, inCart, isGreenPriceBlockedBySelfPickup, discountedPrice, navigation])
     
     const handleProductPress = useCallback(() => {
         navigation.navigate('product' as never, { id: item.id } as never)

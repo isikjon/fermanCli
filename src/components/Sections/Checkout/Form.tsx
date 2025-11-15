@@ -1,5 +1,5 @@
-import { StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { StyleSheet, TouchableOpacity, View, Dimensions, ActivityIndicator } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import Row from '../../../components/Row'
 import Txt from '../../../ui/Text'
@@ -22,11 +22,10 @@ const Form = () => {
     const [bonusAction, setBonusAction] = useState<"save" | "writeOff">("save")
     const [paymentMethod, setPaymentMethod] = useState(0)
     const [express, setExpress] = useState(false)
-    const [expressTime, setExpressTime] = useState(3)
     const [comment, setComment] = useState('')
     const [bonusAmount, setBonusAmount] = useState(0)
     const { deliveryData, addresses, getDelivery } = useDeliveryStore()
-    const { createOrder, deliveryTime, changeDeliveryTime } = useCheckoutStore()
+    const { createOrder, deliveryTime, changeDeliveryTime, isCreatingOrder } = useCheckoutStore()
     const { bonuses, calculateBonus, getBonuses } = useBonusStore()
     const bonusType = bonusAction === "writeOff" ? 0 : 1
 
@@ -63,6 +62,37 @@ const Form = () => {
         }
         updateBonus()
     }, [bonusType, express, calculateBonus])
+
+    useEffect(() => {
+        if (slotList.length === 0) {
+            if (deliveryTime !== "") {
+                changeDeliveryTime("")
+            }
+            return
+        }
+
+        const hasSelected = slotList.some(slot => slot.id === deliveryTime)
+        if (!hasSelected) {
+            changeDeliveryTime(slotList[0].id)
+        }
+    }, [slotList, deliveryTime, changeDeliveryTime])
+
+    useEffect(() => {
+        if (express && deliveryData?.type === 0 && slotList.length === 0) {
+            setExpress(false)
+        }
+    }, [express, deliveryData?.type, slotList.length])
+
+    const selectPlaceholder = useMemo(() => (
+        express ? 'Нет доступных слотов на сегодня' : 'Выберите слот'
+    ), [express])
+
+    const selectKey = useMemo(() => (express ? 'personal-slots' : 'regular-slots'), [express, slotList.length])
+
+    const selectedSlotIndex = slotList.findIndex(i => i.id === deliveryTime)
+    const selectValue = slotList.length === 0
+        ? null
+        : (selectedSlotIndex >= 0 ? selectedSlotIndex : 0)
 
     return (
         <View style={styles.Form}>
@@ -110,9 +140,11 @@ const Form = () => {
             <View style={styles.Group}>
                 <Txt size={16} weight='Bold'>Время {deliveryData?.type === 0 ? "доставки" : "самовывоза"}</Txt>
                 <Select
+                    key={selectKey}
                     array={slotList.map(i => i.value)}
                     onChange={value => changeDeliveryTime(slotList[value].id)}
-                    value={slotList.findIndex(i => i.id === deliveryTime)}
+                    value={selectValue}
+                    placeholder={selectPlaceholder}
                     isScrollEnabled={true}
                 />
             </View>
@@ -200,16 +232,27 @@ const Form = () => {
 
             <Button 
                 height={56} 
-                onClick={() => createOrder(bonusType, express, comment)}
-                disabled={isOrderDisabled}
+                onClick={() => {
+                    if (!isCreatingOrder) {
+                        createOrder(bonusType, express, comment)
+                    }
+                }}
+                disabled={isOrderDisabled || isCreatingOrder}
             >
-                <Txt color='#fff' weight='Bold' size={18}>
-                    {isOrderDisabled 
-                        ? `Мин. заказ ${minOrderAmount} руб.` 
-                        : 'Подтвердить заказ'}
-                </Txt>
+                {isCreatingOrder ? (
+                    <View style={styles.LoadingContainer}>
+                        <ActivityIndicator size="small" color="#fff" />
+                        <Txt color='#fff' weight='Bold' size={18}>Оформление заказа...</Txt>
+                    </View>
+                ) : (
+                    <Txt color='#fff' weight='Bold' size={18}>
+                        {isOrderDisabled 
+                            ? `Мин. заказ ${minOrderAmount} руб.` 
+                            : 'Подтвердить заказ'}
+                    </Txt>
+                )}
             </Button>
-            {isOrderDisabled && (
+            {isOrderDisabled && !isCreatingOrder && (
                 <Txt size={14} color="#FF0000" style={{ textAlign: 'center', marginTop: -16 }}>
                     {cartList.length === 0 
                         ? 'Корзина пуста' 
@@ -268,5 +311,12 @@ const styles = StyleSheet.create({
         marginTop: 0,
         marginRight: 0,
         marginLeft: 0
+    },
+    LoadingContainer: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12
     }
 })

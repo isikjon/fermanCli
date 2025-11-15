@@ -14,6 +14,7 @@ import {
   SafeAreaProvider,
   SafeAreaView,
 } from 'react-native-safe-area-context';
+import { initializeDeepLinking } from './utils/deepLinking';
 
 // Временные заглушки для компонентов (будем создавать постепенно) 
 import HomeScreen from './pages/home';
@@ -36,7 +37,7 @@ import ProductScreen from './pages/catalog/product/[productId]';
 import OrderSuccess from './pages/orderSuccess';
 import { navigationRef } from './components/Navigation';
 import { setNavigationCallback } from './store/auth';
-import { List } from './components/Sections/Catalog';
+import CatalogItem from './pages/catalog/catalogItem';
 import MinOrderBanner from './components/MinOrderBanner';
 import useGlobalStore from './store';
 import Alert from './ui/Alert';
@@ -90,7 +91,6 @@ function RootLayout() {
     setNavigationCallback((route: string, reset?: boolean) => {
       if (navigationRef.current?.isReady()) {
         if (reset) {
-          // Полная очистка стека навигации
           navigationRef.current.reset({
             index: 0,
             routes: [{ name: route as never }],
@@ -100,6 +100,14 @@ function RootLayout() {
         }
       }
     });
+
+    console.log('🔗 [RootLayout] Initializing deep linking')
+    const cleanupDeepLinking = initializeDeepLinking()
+
+    return () => {
+      console.log('🔗 [RootLayout] Cleaning up deep linking')
+      cleanupDeepLinking()
+    }
   }, []);
 
   const onStateChange = (state: any) => {
@@ -148,7 +156,7 @@ function RootLayout() {
               <Stack.Screen name="cart" component={Cart} />
               <Stack.Screen name="auth" component={Auth} />
               <Stack.Screen name="catalog" component={CatalogScreen} />
-              <Stack.Screen name="catalogItem" component={List} />
+              <Stack.Screen name="catalogItem" component={CatalogItem} />
               <Stack.Screen name="not-found" component={NotFoundScreen} />
               <Stack.Screen name="atributes" component={Atribute} />
               <Stack.Screen name="cartDetails" component={CatalogDetails} />

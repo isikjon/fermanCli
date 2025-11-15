@@ -4,6 +4,9 @@ import {FC} from "react";
 import {NumberProp} from "react-native-svg";
 import {RootStackParamList} from "../RootLayout";
 
+export const WEBSITE_BASE_URL = 'https://ferma-dv.ru';
+export const APP_URL_SCHEME = 'burenka';
+
 interface NavItem {
     link: keyof RootStackParamList;
     name: string;
@@ -18,12 +21,10 @@ export const navList: NavItem[] = [
     { link: "cart", name: "корзина", icon: Icons.Cart },
 ];
 export const bannersList = [
-    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("../assets/images/banners/1.png") },
-    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("../assets/images/banners/2.png") },
-    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("../assets/images/banners/3.png") },
-    { title: "СКИДКА НА МОЛОЧНУЮ ПРОДУКЦИЮ", image: require("../assets/images/banners/1.png") },
-    { title: "ДАРИМ БОНУСЫ ПРИ ПОКУПКЕ ФРУКТОВ", image: require("../assets/images/banners/2.png") },
-    { title: "ПОПРОБУЙ СВЕЖУЮ ВЫПЕЧКУ", image: require("../assets/images/banners/3.png") },
+    { title: "", image: require("../assets/images/banners/new_1.jpg") },
+    { title: "", image: require("../assets/images/banners/new_2.jpg") },
+    { title: "", image: require("../assets/images/banners/new_3.jpg") },
+    { title: "", image: require("../assets/images/banners/new_4.jpg") },
 ]
 
 export const categoriesList = [
@@ -427,6 +428,13 @@ export const orderConstants = {
             mediaType: "application/json"
         }
     },
+    project: {
+        meta: {
+            href: "https://api.moysklad.ru/api/remap/1.2/entity/project/02544d53-b93e-11f0-0a80-08450070c327",
+            type: "project",
+            mediaType: "application/json"
+        }
+    }
 }
 
 export const slotsList = [

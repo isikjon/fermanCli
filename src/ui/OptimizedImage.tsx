@@ -94,7 +94,9 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   if (hasError || !imageUrl) {
     return (
       <View style={[styles.emptyContainer, emptyStyle]}>
-        <Empty />
+        <View style={styles.emptyIconWrapper}>
+          <Empty width={48} height={48} />
+        </View>
       </View>
     )
   }
@@ -120,7 +122,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f9f9f9'
+    backgroundColor: '#f9f9f9',
+    overflow: 'hidden'
+  },
+  emptyIconWrapper: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 })
 

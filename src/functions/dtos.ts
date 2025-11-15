@@ -58,7 +58,12 @@ export function CategoryDTO(data: ICategory[]) {
     return sortTree(tree)
 }
 
-export function ProductDTO(data: any) {
+type ProductDTOOptions = {
+    stockByStore?: Record<string, Record<string, number>>
+    storePriority?: string[]
+}
+
+export function ProductDTO(data: any, options?: ProductDTOOptions) {
     if (!data || !Array.isArray(data)) {
         console.log('⚠️ [ProductDTO] Invalid data provided:', typeof data);
         return [];
@@ -77,6 +82,45 @@ export function ProductDTO(data: any) {
         .map((product: any): ProductType | null => {
             try {
                 const stock = product?.stock ?? product?.quantity ?? product?.stockStore ?? undefined;
+                const stockMap = options?.stockByStore?.[product.id];
+                const priorityList = options?.storePriority && options.storePriority.length > 0
+                    ? options.storePriority
+                    : (stockMap ? Object.keys(stockMap) : []);
+                let resolvedStoreId: string | undefined = undefined;
+                let resolvedStock = stock;
+
+                if (stockMap) {
+                    let candidate: { id: string; value: number } | null = null;
+                    for (const storeId of priorityList) {
+                        const value = stockMap[storeId];
+                        if (value && value > 0) {
+                            candidate = { id: storeId, value };
+                            break;
+                        }
+                    }
+
+                    if (!candidate) {
+                        for (const [storeId, value] of Object.entries(stockMap)) {
+                            if (value && value > 0) {
+                                candidate = { id: storeId, value };
+                                break;
+                            }
+                        }
+                    }
+
+                    if (candidate) {
+                        resolvedStoreId = candidate.id;
+                        resolvedStock = candidate.value;
+                    } else if (stock !== undefined && stock > 0) {
+                        const fallbackStoreId = priorityList[0];
+                        if (fallbackStoreId) {
+                            resolvedStoreId = fallbackStoreId;
+                        }
+                        resolvedStock = stock;
+                    } else {
+                        resolvedStock = 0;
+                    }
+                }
                 
                 let price = 0;
                 if (product?.salePrices && Array.isArray(product.salePrices) && product.salePrices.length > 0) {
@@ -97,7 +141,9 @@ export function ProductDTO(data: any) {
                     volume: product?.volume || 0,
                     weight: product?.weight || 0,
                     weighed: product?.weighed || false,
-                    stock: stock
+                    stock: resolvedStock !== undefined ? resolvedStock : stock,
+                    stockByStore: stockMap,
+                    storeId: resolvedStoreId
                 } as ProductType;
 
                 if (price === 0) {

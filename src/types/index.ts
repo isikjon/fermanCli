@@ -17,6 +17,8 @@ export type ProductType = {
     weight: number
     weighed: boolean
     stock?: number
+    stockByStore?: Record<string, number>
+    storeId?: string
     isGreenPrice?: boolean
 }
 
@@ -29,6 +31,8 @@ export type CartType = {
     isWeighted?: boolean
     weight?: number
     stock?: number
+    stockByStore?: Record<string, number>
+    storeId?: string
 }
 
 export type UserDataType = {
@@ -53,6 +57,8 @@ export interface IFavorite {
     isWeighted?: boolean
     weight?: number
     stock?: number
+    stockByStore?: Record<string, number>
+    storeId?: string
 }
 
 export type SuggestionType = {

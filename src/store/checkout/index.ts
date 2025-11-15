@@ -3,12 +3,85 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { calculateDeliveryPrice, getZoneForLocation, formatPrice } from '../../functions'
 import api from '../../api'
-import { IOrder, OrderItemType } from '../../types'
-import { deliveryDataObj } from '../../constants/delivery'
+import { CartType, IOrder, OrderItemType } from '../../types'
 import { selfPickupList } from '../../constants'
 import { ordersDTO } from '../../functions/dtos'
 import { navigate } from '../../components/Navigation'
 import NotificationService from '../../services/NotificationService'
+import { resolveStoreQueueFromDelivery } from '../../utils/storePriority'
+
+const calculateItemRequiredAmount = (item: CartType) => {
+    if (item.isWeighted) {
+        return item.weight ?? item.amount
+    }
+    return item.amount
+}
+
+const selectStoreForCart = (items: CartType[], storeQueue: string[]): string | null => {
+    if (!items.length) {
+        return storeQueue[0] || null
+    }
+
+    const checkedStores = new Set<string>()
+
+    const canFulfillFromStore = (storeId: string) => {
+        const canFulfill = items.every(item => {
+            const required = calculateItemRequiredAmount(item)
+            const stockMap = item.stockByStore
+
+            if (stockMap && Object.prototype.hasOwnProperty.call(stockMap, storeId)) {
+                return stockMap[storeId] >= required
+            }
+
+            if (item.storeId === storeId && item.stock !== undefined) {
+                return item.stock >= required
+            }
+
+            return false
+        })
+
+        if (canFulfill) {
+            return true
+        }
+
+        checkedStores.add(storeId)
+        return false
+    }
+
+    for (const storeId of storeQueue) {
+        if (canFulfillFromStore(storeId)) {
+            return storeId
+        }
+    }
+
+    const candidatePool = new Set<string>()
+    items.forEach(item => {
+        if (item.stockByStore) {
+            Object.keys(item.stockByStore).forEach(id => candidatePool.add(id))
+        }
+        if (item.storeId) {
+            candidatePool.add(item.storeId)
+        }
+    })
+
+    for (const storeId of candidatePool) {
+        if (!checkedStores.has(storeId) && canFulfillFromStore(storeId)) {
+            return storeId
+        }
+    }
+
+    const fallbackStore = items.find(item => item.storeId)?.storeId
+    if (fallbackStore && !checkedStores.has(fallbackStore) && canFulfillFromStore(fallbackStore)) {
+        return fallbackStore
+    }
+
+    const fallbackQueueStore = storeQueue.find(storeId => !checkedStores.has(storeId))
+    if (fallbackQueueStore && canFulfillFromStore(fallbackQueueStore)) {
+        return fallbackQueueStore
+    }
+
+    return null
+}
 
 const useCheckoutStore = create<State>()(devtools((set, get) => ({
     afterAuth: false,
@@ -16,6 +89,7 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
     openedOrderId: "",
     openedOrderPositions: [],
     deliveryTime: "",
+    isCreatingOrder: false,
 
     changeDeliveryTime: (value: string) => set({ deliveryTime: value }),
     changeAfterAuth: (value: boolean) => set({ afterAuth: value }),
@@ -54,6 +128,9 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
 
     createOrder: async (bonusType: number, express: boolean, comment?: string) => {
         try {
+            set({ isCreatingOrder: true })
+            console.log('🔄 [createOrder] Loading started...')
+            
             const { default: useNotificationStore } = await import('../notification')
             const { default: useCartStore } = await import('../cart')
             const { default: useDeliveryStore } = await import('../delivery')
@@ -72,9 +149,12 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
 
             const address = addresses.find((_, index) => index === deliveryData?.id)
             const zone = address && getZoneForLocation(address?.lat, address?.lng)
-            const storeId = deliveryData?.type === 0
-                ? deliveryDataObj.zones.find(i => i.zone.name === zone?.description)?.store.id
-                : selfPickupList[0].list[deliveryData?.id || 0].storeId
+            const storeQueue = resolveStoreQueueFromDelivery(deliveryData, addresses)
+            const storeId = selectStoreForCart(cartList, storeQueue)
+            const pickupCityIndex = deliveryData?.city ?? 0
+            const pickupPoint = deliveryData?.type === 1
+                ? selfPickupList[pickupCityIndex]?.list?.[deliveryData?.id || 0]
+                : undefined
             const bonusAmount = await calculateBonus(bonusType, express)
             const deliveryPrice = zone ? calculateDeliveryPrice(calculateAmount(), zone?.description, express) : 0
             const totalAmount = calculateAmount() + deliveryPrice - bonusAmount
@@ -93,8 +173,8 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             }]
 
             if (!storeId) {
-                console.log('❌ [createOrder] No storeId')
-                setMessage("Вы не указали адрес доставки", "error")
+                console.log('❌ [createOrder] No storeId for delivery', { storeQueue })
+                setMessage("Не удалось подобрать склад для заказа", "error")
                 return
             }
 
@@ -113,7 +193,7 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
                 delivery: {
                     address: deliveryData?.type === 0
                         ? address?.value || ""
-                        : selfPickupList[0].list[deliveryData?.id || 0].address,
+                        : pickupPoint?.address || "",
                     time: deliveryTime,
                     type: deliveryData ? deliveryData?.type : 1
                 },
@@ -135,6 +215,10 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             console.log('📅 Last order date updated')
 
             console.log('🧭 [createOrder] Navigating to orderSuccess with amount:', totalAmount, 'number:', orderNumber)
+            
+            set({ isCreatingOrder: false })
+            console.log('✅ [createOrder] Loading completed')
+            
             navigate('orderSuccess', { orderAmount: totalAmount, orderNumber: orderNumber })
 
         } catch (error: any) {
@@ -142,6 +226,10 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             if (error?.response) {
                 console.log('❌ [createOrder] ERROR Response:', error.response.data)
             }
+            
+            set({ isCreatingOrder: false })
+            console.log('❌ [createOrder] Loading stopped (error)')
+            
             const { default: useNotificationStore } = await import('../notification')
             const { setMessage } = useNotificationStore.getState()
             setMessage("Ошибка при создании заказа", "error")

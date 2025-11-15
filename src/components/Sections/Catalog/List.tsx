@@ -178,9 +178,10 @@ export default List;
 
 const styles = StyleSheet.create({
   Container: {
-    flex: 1,
     paddingHorizontal: 16,
     backgroundColor: '#fff',
+    zIndex: -1,
+    elevation: -1,
   },
   Row: {
     gap: 24,

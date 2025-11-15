@@ -26,6 +26,11 @@ const FavoriteCard: FC<Props> = ({ item }) => {
         [cartList, item.id]
     )
 
+    const cartStoreId = useMemo(() => {
+        const stored = cartList.find(i => i.storeId)
+        return stored?.storeId || null
+    }, [cartList])
+
     const isOutOfStock = useMemo(() => 
         item.stock !== undefined && item.stock <= 0, 
         [item.stock]
@@ -57,9 +62,25 @@ const FavoriteCard: FC<Props> = ({ item }) => {
             setMessage('Товар удалён из корзины', 'success')
             return
         }
+
+        const targetStoreId = item.storeId
+            ? item.storeId
+            : item.stockByStore
+                ? Object.entries(item.stockByStore).find(([, value]) => value && value > 0)?.[0] || null
+                : null
         
         if (isOutOfStock) {
             setMessage('Товар отсутствует в наличии', 'error')
+            return
+        }
+
+        if (cartStoreId && targetStoreId && cartStoreId !== targetStoreId) {
+            setMessage('Этот товар находится на другом складе. Завершите текущий заказ или очистите корзину.', 'error')
+            return
+        }
+
+        if (cartStoreId && !targetStoreId) {
+            setMessage('Не удалось определить склад для товара. Попробуйте обновить список или оформить отдельный заказ.', 'error')
             return
         }
         
@@ -71,9 +92,11 @@ const FavoriteCard: FC<Props> = ({ item }) => {
             price: item.price,
             isWeighted: item.isWeighted,
             weight: item.isWeighted ? (item.weight || 0.1) : undefined,
-            stock: item.stock
+            stock: item.stock,
+            stockByStore: item.stockByStore,
+            storeId: targetStoreId || undefined
         })
-    }, [item, setItemInCart, removeItemFromCart, isOutOfStock, inCart])
+    }, [item, setItemInCart, removeItemFromCart, isOutOfStock, inCart, cartStoreId])
 
     const buttonBackground = useMemo(() => {
         if (isOutOfStock) return "#CCCCCC"

@@ -6,6 +6,7 @@ export interface State {
     openedOrderId: string,
     openedOrderPositions: OrderItemType[]
     deliveryTime: string,
+    isCreatingOrder: boolean,
 
     changeDeliveryTime: (value: string) => void,
     changeOpenedOrderId: (value: string) => void,

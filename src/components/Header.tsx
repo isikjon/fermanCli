@@ -1,4 +1,4 @@
-import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native'
 import React, { FC, useEffect, useRef, useState } from 'react'
 import Banner from './Banner'
 import TouchBox from './TouchBox'
@@ -8,7 +8,7 @@ import Search from '../ui/Search'
 import { useNavigation } from '@react-navigation/native'
 import useGlobalStore from '../store'
 import useDeliveryStore from '../store/delivery'
-import { selfPickupList } from '../constants'
+import { selfPickupList, bannersList } from '../constants'
 import useBonusStore from '../store/bonus'
 import useCatalogStore from '../store/catalog'
 import icon from "../assets/images/icon.png";
@@ -17,9 +17,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 interface Props {
     isHideSearch?: boolean
     scrollRef?: React.RefObject<ScrollView>
+    showBanners?: boolean
 }
 
-const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
+const Header: FC<Props> = ({ isHideSearch, scrollRef, showBanners = false }) => {
     const insets = useSafeAreaInsets()
     const { isAuth, changeEnableScroll } = useGlobalStore()
     const navigation = useNavigation<any>()
@@ -150,6 +151,31 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef }) => {
                     </View>
                 )}
             </View>
+
+            {showBanners && (
+                <View style={styles.BannersContainer}>
+                    <View style={styles.BannersTitle}>
+                        <Txt size={24} weight="Jingleberry">Рекомендуем</Txt>
+                    </View>
+                    <FlatList
+                        data={bannersList}
+                        horizontal
+                        keyExtractor={(_, index) => index.toString()}
+                        showsHorizontalScrollIndicator={false}
+                        nestedScrollEnabled={true}
+                        contentContainerStyle={styles.BannersList}
+                        keyboardShouldPersistTaps="handled"
+                        renderItem={({ item }) => (
+                            <View style={styles.BannerItem}>
+                                <View style={styles.BannerTitle}>
+                                    <Txt color="#fff" weight='Bold' lineHeight={20}>{item.title}</Txt>
+                                </View>
+                                <Image style={styles.BannerImage} source={item.image} />
+                            </View>
+                        )}
+                    />
+                </View>
+            )}
         </View>
     )
 }
@@ -169,8 +195,8 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         width: Dimensions.get("screen").width - 30,
         left: 0,
-        zIndex: 500,
-        elevation: 10,
+        zIndex: 10000,
+        elevation: 10000,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: "#4FBD01",
@@ -179,5 +205,41 @@ const styles = StyleSheet.create({
     },
     SearchBoxScroll: { maxHeight: 150 },
     SearchBoxItem: { paddingBottom: 12 },
-    SearchContainer: { position: "relative" }
+    SearchContainer: { 
+        position: "relative",
+        zIndex: 10000,
+        elevation: 10000
+    },
+    BannersContainer: {
+        gap: 16,
+        zIndex: 1,
+        elevation: 1
+    },
+    BannersTitle: {
+        paddingHorizontal: 0
+    },
+    BannersList: {
+        paddingHorizontal: 0
+    },
+    BannerItem: {
+        position: "relative",
+        width: 120,
+        height: 120,
+        borderRadius: 16,
+        overflow: "hidden",
+        marginRight: 16
+    },
+    BannerImage: {
+        position: "absolute",
+        width: "100%",
+        height: "100%"
+    },
+    BannerTitle: {
+        position: "absolute",
+        top: 10,
+        left: 10,
+        flex: 1,
+        zIndex: 1,
+        width: 100
+    }
 })

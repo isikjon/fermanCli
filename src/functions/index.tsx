@@ -219,19 +219,6 @@ export function orderPayload(data: IOrder) {
         }
     }
 
-    const orderSourceAttribute = {
-        // Источник заказа - Приложение
-        meta: {
-            ...orderConstants.attributes.orderSource.meta
-        },
-        value: {
-            meta: {
-                ...orderConstants.attributes.orderSource.valueMeta,
-                href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/${orderConstants.attributes.orderSource.mobileAppValue}`,
-            }
-        }
-    }
-
     const attributes = data.delivery.type === 0 ? [
         {
             // Тип заказа доставка
@@ -256,8 +243,7 @@ export function orderPayload(data: IOrder) {
                     href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/d133041a-0836-11ef-0a80-10de004fb76e/${data.delivery.time}`,
                 }
             }
-        },
-        orderSourceAttribute
+        }
     ] : [
         {
             // Тип заказа самовывоз
@@ -282,8 +268,7 @@ export function orderPayload(data: IOrder) {
                     href: `https://api.moysklad.ru/api/remap/1.2/entity/customentity/52f5aab7-0836-11ef-0a80-0bcc004eec9d/${data.delivery.time}`,
                 }
             }
-        },
-        orderSourceAttribute
+        }
     ]
 
     const store = {
@@ -304,16 +289,57 @@ export function orderPayload(data: IOrder) {
         description: `${data.bonuses.type === 0 ? "-" : "+"}${data.bonuses.amount} Бонусов`,
         shipmentAddress: data.delivery.address,
         positions,
+        tags: ["Мобильное приложение"],
+        project: orderConstants.project
     }
 }
 
 export function getSlots(type: number, isPersonalDelivery: boolean = false): { name: string; array: SlotType[] } {
-    const selected = slotsList[type];
-    
     const now = new Date();
     const vladHours = (now.getUTCHours() + 10 + 24) % 24;
     const vladMinutes = now.getUTCMinutes();
     const currentVladMinutes = vladHours * 60 + vladMinutes;
+
+    if (type === 0 && isPersonalDelivery) {
+        const windowStart = 16 * 60 + 30;
+        const firstSlotClose = 18 * 60 + 30;
+        const secondSlotClose = 19 * 60 + 30;
+
+        const personalSlots: SlotType[] = [];
+        const tomorrowPersonalSlots: SlotType[] = [
+            { id: 'personal-tomorrow-19-20', value: 'Завтра, 19:00 - 20:00' },
+            { id: 'personal-tomorrow-20-22', value: 'Завтра, 20:00 - 22:00' },
+        ];
+
+        if (currentVladMinutes < windowStart) {
+            personalSlots.push(
+                { id: 'personal-19-20', value: 'Сегодня, 19:00 - 20:00' },
+                { id: 'personal-20-22', value: 'Сегодня, 20:00 - 22:00' },
+            );
+        } else {
+            if (currentVladMinutes < firstSlotClose) {
+                personalSlots.push({ id: 'personal-19-20', value: 'Сегодня, 19:00 - 20:00' });
+            }
+
+            if (currentVladMinutes < secondSlotClose) {
+                personalSlots.push({ id: 'personal-20-22', value: 'Сегодня, 20:00 - 22:00' });
+            }
+        }
+
+        if (personalSlots.length > 0) {
+            return {
+                name: 'Персональная доставка',
+                array: personalSlots,
+            };
+        }
+
+        return {
+            name: 'Персональная доставка',
+            array: tomorrowPersonalSlots,
+        };
+    }
+
+    const selected = slotsList[type];
 
     const cutoffTime = 16 * 60 + 30;
 
