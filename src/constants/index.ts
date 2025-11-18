@@ -21,10 +21,10 @@ export const navList: NavItem[] = [
     { link: "cart", name: "корзина", icon: Icons.Cart },
 ];
 export const bannersList = [
-    { title: "", image: require("../assets/images/banners/new_1.jpg") },
-    { title: "", image: require("../assets/images/banners/new_2.jpg") },
-    { title: "", image: require("../assets/images/banners/new_3.jpg") },
-    { title: "", image: require("../assets/images/banners/new_4.jpg") },
+    { title: "", image: require("../assets/images/banners/new_5.jpg") },
+    { title: "", image: require("../assets/images/banners/new_6.jpg") },
+    { title: "", image: require("../assets/images/banners/new_7.jpg") },
+    { title: "", image: require("../assets/images/banners/new_8.jpg") },
 ]
 
 export const categoriesList = [

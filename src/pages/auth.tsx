@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const auth = () => {
-    const { phone, changeData, isCode, code, sendCode, verifyCode, timer, startTimer, changeIsCode, autoFillCode } = useAuthStore()
+    const { phone, changeData, isCode, code, sendCode, verifyCode, timer, startTimer, changeIsCode } = useAuthStore()
     const { isFirstLaunch, setFirstLaunch, isDeliverySet, isAuth } = useGlobalStore()
     const navigation = useNavigation<any>()
     const insets = useSafeAreaInsets()
@@ -33,15 +33,7 @@ const auth = () => {
 
     const showSkipButton = false
 
-    useEffect(() => {
-        if (isCode) {
-            const timer = setTimeout(() => {
-                autoFillCode()
-            }, 3000)
-            
-            return () => clearTimeout(timer)
-        }
-    }, [isCode, autoFillCode])
+    // Автоматическое заполнение кода теперь обрабатывается через SMS Retriever в store
 
     return (
         <View style={[styles.Container, { paddingTop: Math.max(insets.top, 16) }]}>

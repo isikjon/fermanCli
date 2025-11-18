@@ -73,20 +73,73 @@ const useAuthStore = create<State>()(devtools((set, get) => ({
             
             const code = generateCode()
             const phone = normalizePhoneNumber(get().phone)
+            
+            // Формируем сообщение
+            // SMS.ru автоматически добавит хеш приложения для SMS Retriever API
+            // Если у вас есть доступ к настройкам SMS-шаблонов на сервере,
+            // можно добавить хеш вручную в формате: <#> Текст\nХЕШ_ПРИЛОЖЕНИЯ
             const message = `Ваш код подтверждения: ${code}`
     
             set({ smsCode: code })
     
-            const registered = await SmsRetriever.startSmsRetriever()
-            if (registered) {
-                const sub = SmsRetriever.addSmsListener(event => {
-                    const text = event.message || ''
-                    const m = text.match(/(^|\D)(\d{4})(?!\d)/)
-                    if (m && m[2]) {
-                        set({ code: m[2] })
-                    }
-                    try { sub.remove() } catch {}
-                })
+            // Запускаем SMS Retriever для Android (автоматическое заполнение кода)
+            try {
+                const registered = await SmsRetriever.startSmsRetriever()
+                if (registered) {
+                    console.log('SMS Retriever started successfully')
+                    
+                    // Подписываемся на получение SMS
+                    const subscription = SmsRetriever.addSmsListener((event) => {
+                        try {
+                            const text = event.message || ''
+                            console.log('Received SMS:', text)
+                            
+                            // Ищем 4-значный код в SMS (различные варианты формата)
+                            // Вариант 1: "код: 1234" или "код 1234"
+                            // Вариант 2: "1234" как отдельное число
+                            // Вариант 3: "Ваш код подтверждения: 1234"
+                            const patterns = [
+                                /(?:код|code)[\s:]*(\d{4})/i,
+                                /(?:подтверждения|confirmation)[\s:]*(\d{4})/i,
+                                /(?:^|\D)(\d{4})(?!\d)/,
+                            ]
+                            
+                            for (const pattern of patterns) {
+                                const match = text.match(pattern)
+                                if (match && match[1]) {
+                                    const extractedCode = match[1]
+                                    console.log('Extracted code from SMS:', extractedCode)
+                                    set({ code: extractedCode })
+                                    
+                                    // Удаляем подписку после успешного получения
+                                    try {
+                                        subscription.remove()
+                                    } catch (e) {
+                                        console.log('Error removing SMS listener:', e)
+                                    }
+                                    break
+                                }
+                            }
+                        } catch (error) {
+                            console.log('Error processing SMS:', error)
+                        }
+                    })
+                    
+                    // Таймаут для удаления подписки через 5 минут (если SMS не пришло)
+                    setTimeout(() => {
+                        try {
+                            subscription.remove()
+                            console.log('SMS listener removed after timeout')
+                        } catch (e) {
+                            console.log('Error removing SMS listener on timeout:', e)
+                        }
+                    }, 5 * 60 * 1000)
+                } else {
+                    console.log('SMS Retriever failed to start')
+                }
+            } catch (smsError) {
+                console.log('SMS Retriever error (non-critical):', smsError)
+                // Не критичная ошибка - пользователь может ввести код вручную
             }
     
             if (phone === "79999999999") {
