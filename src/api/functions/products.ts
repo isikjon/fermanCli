@@ -6,8 +6,8 @@ import { getCDNImageUrl } from "../../config/cdnMapping"
 import { ProductType } from "../../types"
 import { getDefaultStoreQueue } from "../../utils/storePriority"
 
-const AUTH = { Authorization: "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2" }
-export const MOYSKLAD_TOKEN = "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2"
+const AUTH = { Authorization: "Bearer 7fe5aa1b7dcaa2f072ee8ced4ef18d32bd269fc0" }
+export const MOYSKLAD_TOKEN = "Bearer 7fe5aa1b7dcaa2f072ee8ced4ef18d32bd269fc0"
 const STOCK_REPORT_URL = "https://api.moysklad.ru/api/remap/1.2/report/stock/bystore"
 
 function hasImage(productId: string): boolean {

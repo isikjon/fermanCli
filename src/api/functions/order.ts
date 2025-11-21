@@ -1,8 +1,9 @@
 import { orderPayload } from "../../functions";
 import { IOrder } from "../../types";
 import axios from "axios";
+import { MOYSKLAD_TOKEN } from "./products";
 
-const AUTH = { Authorization: "Bearer c4db121af6ea8a42da677040a1f0685075ecc5b2" }
+const AUTH = { Authorization: MOYSKLAD_TOKEN }
 
 export const createCustomer = async (name: string, phone: string) => {
     console.log('👤 [API createCustomer] Creating customer:', { name, phone })
