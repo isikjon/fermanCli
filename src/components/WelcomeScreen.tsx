@@ -17,45 +17,33 @@ const WelcomeScreen: React.FC<Props> = () => {
 
     useEffect(() => {
         const initializeApp = async () => {
-            console.log('🚀 [WelcomeScreen] Starting initialization...')
-            
             try {
                 await initializeAuth()
-                console.log('✅ [WelcomeScreen] Auth initialized')
                 
                 if (isAuth) {
-                    console.log('💰 [WelcomeScreen] Loading bonuses for authorized user...')
                     await getBonuses()
-                    console.log('✅ [WelcomeScreen] Bonuses loaded')
                 }
             } catch (error) {
-                console.log('❌ [WelcomeScreen] Initialization error:', error)
             }
             
             const timer = setTimeout(() => {
-                console.log('🔍 [WelcomeScreen] Checking state: isFirstLaunch =', isFirstLaunch, 'isAuth =', isAuth, 'isDeliverySet =', isDeliverySet)
-                
                 if (!isAuth) {
-                    // Если не авторизован - обязательно на авторизацию
-                    console.log('WelcomeScreen: Navigating to auth (not authorized)')
                     navigation.reset({
                         index: 0,
                         routes: [{ name: 'auth' }],
                     })
                 } else if (isAuth && !isDeliverySet) {
-                    console.log('WelcomeScreen: Navigating to delivery (user authorized but no delivery set)')
                     navigation.reset({
                         index: 0,
                         routes: [{ name: 'delivery' }],
                     })
                 } else if (isAuth && isDeliverySet) {
-                    console.log('WelcomeScreen: Navigating to home (user authorized and delivery set)')
                     navigation.reset({
                         index: 0,
                         routes: [{ name: 'home' }],
                     })
                 }
-            }, 2000) // 2 секунды 
+            }, 2000)
 
             return () => clearTimeout(timer)
         }
@@ -65,8 +53,6 @@ const WelcomeScreen: React.FC<Props> = () => {
 
     return (
         <View style={styles.Container}>
-            {/* GIF анимация на весь экран */}
-  
             <FastImage 
                 source={require('../assets/images/ezgif-266e19ebdc2d94.gif')} 
                 style={styles.FullScreenGif}
@@ -96,10 +82,10 @@ const styles = StyleSheet.create({
     },
     MillFooting: {
         position: 'absolute',
-        width: width * 0.4, // 40% ширины экрана
-        height: height * 0.3, // 30% высоты экрана
-        right: 48, // 48px от правого края
-        top: (height - height * 0.3 - 48) / 2, // по центру по высоте с учетом отступа снизу 48px
+        width: width * 0.4,
+        height: height * 0.3,
+        right: 48,
+        top: (height - height * 0.3 - 48) / 2,
     },
     FullScreenGif: {
         position: 'absolute',

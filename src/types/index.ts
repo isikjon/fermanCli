@@ -110,6 +110,11 @@ export interface IOrder {
     },
     items: OrderItemType[]
     comment?: string
+    promoCode?: {
+        code: string
+        discount: number
+        id: string
+    }
 }
 
 export type OrderType = {

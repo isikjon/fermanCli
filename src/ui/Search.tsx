@@ -5,10 +5,11 @@ import Icons from './Icons'
 interface Props {
     value: string
     onChange: (value: string) => void
-    onFocus?: () => void // 🟢 добавили обработчик фокуса
+    onFocus?: () => void
+    onSubmit?: () => void
 }
 
-const Search: FC<Props> = ({ onChange, value, onFocus }) => {
+const Search: FC<Props> = ({ onChange, value, onFocus, onSubmit }) => {
     return (
         <View style={styles.Search}>
             <Icons.Search color="#4FBD01" />
@@ -18,7 +19,9 @@ const Search: FC<Props> = ({ onChange, value, onFocus }) => {
                 placeholder="Поиск товаров"
                 placeholderTextColor="rgba(79, 189, 1, 0.5)"
                 style={styles.Input}
-                onFocus={onFocus} // 🟢 прокинули фокус
+                onFocus={onFocus}
+                onSubmitEditing={onSubmit}
+                returnKeyType="search"
             />
             {value.length !== 0 && (
                 <TouchableOpacity onPress={() => onChange("")} activeOpacity={0.5}>

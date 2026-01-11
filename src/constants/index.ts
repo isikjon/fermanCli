@@ -17,14 +17,13 @@ export const navList: NavItem[] = [
     { link: "home", name: "начало", icon: Icons.Home },
     { link: "favorite", name: "избранное", icon: Icons.Heard },
     { link: "catalog", name: "каталог", icon: Icons.Grid },
-    { link: "contacts", name: "контакты", icon: Icons.Phone },
+    { link: "profile", name: "профиль", icon: Icons.User },
     { link: "cart", name: "корзина", icon: Icons.Cart },
 ];
 export const bannersList = [
-    { title: "", image: require("../assets/images/banners/new_5.jpg") },
-    { title: "", image: require("../assets/images/banners/new_6.jpg") },
-    { title: "", image: require("../assets/images/banners/new_7.jpg") },
-    { title: "", image: require("../assets/images/banners/new_8.jpg") },
+    { title: "", image: require("../assets/images/banners/new_9.jpg") },
+    { title: "", image: require("../assets/images/banners/new_10.jpg") },
+    { title: "", image: require("../assets/images/banners/new_11.jpg") },
 ]
 
 export const categoriesList = [

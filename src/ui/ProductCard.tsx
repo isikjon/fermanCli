@@ -38,19 +38,8 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     const initialAmount = useMemo(() => {
         if (cartItem) {
             const amt = item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
-            console.log('📦 [ProductCard] Initial amount from cart:', {
-                id: item.id,
-                name: item.name.substring(0, 30),
-                amount: amt,
-                isWeighed: item.weighed
-            });
             return amt
         }
-        console.log('📦 [ProductCard] Initial amount (not in cart):', {
-            id: item.id,
-            name: item.name.substring(0, 30),
-            amount: item.weighed ? 0.1 : 1
-        });
         return item.weighed ? 0.1 : 1
     }, [cartItem, item.weighed, item.id, item.name])
     
@@ -59,20 +48,9 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     useEffect(() => {
         if (cartItem) {
             const newAmount = item.weighed && cartItem.weight !== undefined ? cartItem.weight : cartItem.amount
-            console.log('📦 [ProductCard] Syncing amount from cart:', {
-                id: item.id,
-                name: item.name.substring(0, 30),
-                oldAmount: amount,
-                newAmount: newAmount
-            });
             setAmount(newAmount)
         } else {
             const resetAmount = item.weighed ? 0.1 : 1
-            console.log('📦 [ProductCard] Resetting amount (not in cart):', {
-                id: item.id,
-                name: item.name.substring(0, 30),
-                resetTo: resetAmount
-            });
             setAmount(resetAmount)
         }
     }, [cartItem, item.weighed, item.id, item.name])
@@ -108,56 +86,36 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
     const handleAddToCart = useCallback(() => {
         const { setMessage } = require('../store/notification').default.getState()
-        
-        console.log('➕ [ProductCard] Add to cart button clicked:', {
-            id: item.id,
-            name: item.name.substring(0, 30),
-            amount: amount,
-            inCart: inCart,
-            isOutOfStock: isOutOfStock
-        });
 
         if (cartStoreId && item.storeId && cartStoreId !== item.storeId) {
-            console.log('❌ [ProductCard] Blocked: store mismatch', { cartStoreId, itemStoreId: item.storeId })
             setMessage('Этот товар доступен на другом складе. Завершите текущий заказ или очистите корзину.', 'error')
             return
         }
 
         if (cartStoreId && !item.storeId) {
-            console.log('❌ [ProductCard] Blocked: item without store for existing cart store', { cartStoreId })
             setMessage('Не удалось определить склад для товара. Попробуйте обновить список или оформить отдельный заказ.', 'error')
             return
         }
 
         if (isGreenPriceBlockedBySelfPickup) {
-            console.log('❌ [ProductCard] Blocked: Green price with self-pickup');
             setMessage('Зелёные ценники доступны только при доставке!', 'error')
             return
         }
         
         if (inCart) {
-            console.log('🛒 [ProductCard] Navigating to cart (item already in cart)');
             navigation.navigate('cart' as never)
             return
         }
         
         if (isOutOfStock) {
-            console.log('❌ [ProductCard] Blocked: Out of stock');
             setMessage('Товар отсутствует в наличии', 'error')
             return
         }
         
         if (item.stock !== undefined && amount > item.stock) {
-            console.log('❌ [ProductCard] Blocked: Not enough stock', { amount, stock: item.stock });
             setMessage('На складе недостаточно товара', 'error')
             return
         }
-        
-        console.log('✅ [ProductCard] Adding to cart:', {
-            amount: item.weighed ? 1 : amount,
-            weight: item.weighed ? amount : undefined,
-            isWeighted: item.weighed
-        });
 
         setItemInCart({
             amount: item.weighed ? 1 : amount,
@@ -179,18 +137,9 @@ const ProductCard: FC<Props> = ({ item, width }) => {
     
     const handleAmountChange = useCallback((value: number) => {
         const roundedValue = roundAmount(value, item.weighed)
-        console.log('🔄 [ProductCard] Amount changed:', {
-            id: item.id,
-            name: item.name.substring(0, 30),
-            oldAmount: amount,
-            newAmount: roundedValue,
-            inCart: inCart
-        });
-
         setAmount(roundedValue)
 
         if (inCart && cartItem) {
-            console.log('🔄 [ProductCard] Updating cart directly (item already in cart)');
             if (item.weighed) {
                 changeCartItem(item.id, { ...cartItem, weight: roundedValue })
             } else {
@@ -295,7 +244,6 @@ const ProductCard: FC<Props> = ({ item, width }) => {
 
 ProductCard.displayName = 'ProductCard'
 
-// Мемоизируем компонент для предотвращения лишних ре-рендеров
 export default memo(ProductCard, (prevProps, nextProps) => {
     return (
         prevProps.item.id === nextProps.item.id &&

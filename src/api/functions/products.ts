@@ -118,7 +118,6 @@ async function fetchStockMap(filters: string[]): Promise<Record<string, Record<s
         const rows = Array.isArray(response.data?.rows) ? response.data.rows : []
         return buildStockMap(rows)
     } catch (error) {
-        console.log('⚠️ [fetchStockMap] ERROR:', error)
         return {}
     }
 }
@@ -134,8 +133,6 @@ export async function getProducts(offset: number, category: string, storeQueue?:
         const { changeIsPagination } = useCatalogStore.getState()
         const productFolder = `https://api.moysklad.ru/api/remap/1.2/entity/productfolder/${category}`
         const assortmentUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=productFolder=${productFolder}&limit=1000&expand=attributes`
-
-        console.log('📦 [getProducts] Loading with store priority:', storeQueue)
 
         changeIsPagination(false, 0)
 
@@ -157,15 +154,12 @@ export async function getProducts(offset: number, category: string, storeQueue?:
 
         const totalSize = sorted.length
 
-        console.log('📊 [getProducts] Total:', totalSize, 'InStock:', inStock.length, 'OutOfStock:', outOfStock.length)
-
         if (totalSize > 20) {
             changeIsPagination(true, totalSize)
         }
 
         return sorted.slice(offset, offset + 20)
     } catch (error) {
-        console.log("getProducts error:", error)
         return []
     }
 }
@@ -198,8 +192,6 @@ export async function searchProduct(name: string, storeQueue?: string[]) {
     const products = ProductDTO(rows, { stockByStore: stockMap, storePriority: priority })
     const { inStock, outOfStock } = splitProductsByAvailability(products)
 
-    console.log('🔍 [searchProduct] Query:', name, 'Total:', products.length, 'InStock:', inStock.length, 'OutOfStock:', outOfStock.length)
-
     return [
         ...sortProductsByImageAvailabilityList(inStock),
         ...sortProductsByImageAvailabilityList(outOfStock)
@@ -208,8 +200,6 @@ export async function searchProduct(name: string, storeQueue?: string[]) {
 
 export async function getProduct(id: string, storeQueue?: string[]) {
     try {
-        console.log('📦 [getProduct] Loading product:', id)
-
         const fullUrl = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=id=${id}&expand=attributes`
         const priority = storeQueue && storeQueue.length ? storeQueue : getDefaultStoreQueue()
 
@@ -221,7 +211,6 @@ export async function getProduct(id: string, storeQueue?: string[]) {
         const rows = response.data.rows?.filter(Boolean) || []
 
         if (!rows.length) {
-            console.log('⚠️ [getProduct] Product not found in assortment, trying direct product endpoint')
             const directResponse = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`, {
                 headers: AUTH
             })
@@ -232,23 +221,11 @@ export async function getProduct(id: string, storeQueue?: string[]) {
         const products = ProductDTO(rows, { stockByStore: stockMap, storePriority: priority })
 
         if (!products.length) {
-            console.log('❌ [getProduct] Failed to process product')
             throw new Error('Product not found')
         }
 
-        const product = products[0]
-
-        console.log('✅ [getProduct] Product loaded:', {
-            name: product.name?.substring(0, 50),
-            id: product.id,
-            stock: product.stock,
-            price: product.price,
-            storeId: product.storeId
-        })
-
-        return product
+        return products[0]
     } catch (error) {
-        console.log('❌ [getProduct] ERROR:', error)
         const response = await axios.get(`https://api.moysklad.ru/api/remap/1.2/entity/product/${id}`, {
             headers: AUTH
         })
@@ -259,8 +236,6 @@ export async function getProduct(id: string, storeQueue?: string[]) {
 
 export async function getProductFromAtributes(id: string, storeQueue?: string[]) {
     try {
-        console.log('🔍 [getProductFromAtributes] START - Attribute ID:', id)
-
         const url = `https://api.moysklad.ru/api/remap/1.2/entity/assortment?filter=https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/${id}=true&expand=attributes&limit=1000`
         const priority = storeQueue && storeQueue.length ? storeQueue : getDefaultStoreQueue()
 
@@ -276,26 +251,18 @@ export async function getProductFromAtributes(id: string, storeQueue?: string[])
         const products = ProductDTO(rows, { stockByStore: stockMap, storePriority: priority })
         const { inStock, outOfStock } = splitProductsByAvailability(products)
 
-        console.log('📊 [getProductFromAtributes] Total:', products.length, 'InStock:', inStock.length, 'OutOfStock:', outOfStock.length)
-
         const sorted = [
             ...sortProductsByImageAvailabilityList(inStock),
             ...sortProductsByImageAvailabilityList(outOfStock)
         ]
 
-        if (sorted.length === 0) {
-            console.log('⚠️ [getProductFromAtributes] NO PRODUCTS FOUND FROM API!')
-        }
-
         const isGreenPrices = id === '762d57da-1191-11ee-0a80-043600051b3e'
         if (isGreenPrices) {
-            console.log('🟢 [getProductFromAtributes] Green Prices detected, marking products')
             return sorted.map(p => ({ ...p, isGreenPrice: true }))
         }
 
         return sorted
     } catch (error) {
-        console.error('❌ [getProductFromAtributes] ERROR:', error)
         return []
     }
 }

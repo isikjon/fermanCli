@@ -84,3 +84,55 @@ export const getDataFromURL = async (url: string) => {
         headers: AUTH
     })
 }
+
+export const checkPromoCode = async (code: string) => {
+    try {
+        console.log('🎟️ [API checkPromoCode] Checking promo code:', code)
+        
+        const searchCode = code.trim().toUpperCase()
+        const response = await axios.get(
+            `https://api.moysklad.ru/api/remap/1.2/entity/customentity?filter=name~${encodeURIComponent(searchCode)}`,
+            { headers: AUTH }
+        )
+        
+        if (response.data.rows && response.data.rows.length > 0) {
+            const promo = response.data.rows.find((p: any) => 
+                p.name?.toUpperCase() === searchCode
+            ) || response.data.rows[0]
+            
+            const discountAttr = promo.attributes?.find((attr: any) => 
+                attr.name === 'Скидка' || attr.name === 'Размер скидки' || attr.name === 'Discount'
+            )
+            const discount = discountAttr?.value || promo.discount || 0
+            
+            const activeAttr = promo.attributes?.find((attr: any) => 
+                attr.name === 'Активен' || attr.name === 'Активный' || attr.name === 'Active'
+            )
+            const isActive = activeAttr ? activeAttr.value !== false : true
+            
+            const discountValue = typeof discount === 'number' ? discount : parseFloat(String(discount)) || 0
+            
+            console.log('✅ [API checkPromoCode] Promo code found:', { 
+                id: promo.id, 
+                name: promo.name,
+                discount: discountValue, 
+                isActive 
+            })
+            
+            return {
+                valid: isActive && discountValue > 0,
+                discount: discountValue,
+                id: promo.id
+            }
+        }
+        
+        console.log('❌ [API checkPromoCode] Promo code not found')
+        return { valid: false, discount: 0, id: null }
+    } catch (error: any) {
+        console.log('❌ [API checkPromoCode] ERROR:', error)
+        if (error?.response) {
+            console.log('❌ [API checkPromoCode] ERROR Response:', error.response.data)
+        }
+        return { valid: false, discount: 0, id: null }
+    }
+}

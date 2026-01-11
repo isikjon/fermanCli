@@ -4,6 +4,7 @@ import FastImage, { ResizeMode } from 'react-native-fast-image'
 import { getCDNImageUrl } from '../config/cdnMapping'
 import Empty from '../assets/svg/Empty'
 import { getMoyskladImageUrl, getMoyskladVariantImageUrl } from '../api/functions/images'
+import { MOYSKLAD_TOKEN } from '../api/functions/products'
 
 interface OptimizedImageProps {
   productId: string
@@ -21,6 +22,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   emptyStyle
 }) => {
   const [imageUrl, setImageUrl] = useState<string>('')
+  const [needsAuth, setNeedsAuth] = useState(false)
   const [hasError, setHasError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -30,38 +32,36 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     const loadImage = async () => {
       setIsLoading(true)
       
-      const cdnUrl = getCDNImageUrl(productId, index)
-      
-      if (cdnUrl && isMounted) {
-        setImageUrl(cdnUrl)
-        setHasError(false)
-        setIsLoading(false)
-        return
-      }
-      
       try {
         let moyskladUrl = await getMoyskladImageUrl(productId)
         
-        if (!moyskladUrl && isMounted) {
+        if (!moyskladUrl) {
           moyskladUrl = await getMoyskladVariantImageUrl(productId)
         }
         
         if (moyskladUrl && isMounted) {
           setImageUrl(moyskladUrl)
+          setNeedsAuth(true)
           setHasError(false)
-        } else if (isMounted) {
-          setImageUrl('')
-          setHasError(true)
+          setIsLoading(false)
+          return
         }
       } catch (error) {
-        if (isMounted) {
-          setImageUrl('')
-          setHasError(true)
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
+      }
+      
+      const cdnUrl = getCDNImageUrl(productId, index)
+      
+      if (cdnUrl && isMounted) {
+        setImageUrl(cdnUrl)
+        setNeedsAuth(false)
+        setHasError(false)
+      } else if (isMounted) {
+        setImageUrl('')
+        setHasError(true)
+      }
+      
+      if (isMounted) {
+        setIsLoading(false)
       }
     }
 
@@ -82,6 +82,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       
       if (moyskladUrl) {
         setImageUrl(moyskladUrl)
+        setNeedsAuth(true)
         setHasError(false)
       } else {
         setHasError(true)
@@ -101,14 +102,23 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     )
   }
 
-  return (
-    <FastImage
-      style={style}
-      source={{
+  const imageSource = needsAuth
+    ? {
+        uri: imageUrl,
+        priority: FastImage.priority.high,
+        cache: FastImage.cacheControl.immutable,
+        headers: { Authorization: MOYSKLAD_TOKEN }
+      }
+    : {
         uri: imageUrl,
         priority: FastImage.priority.high,
         cache: FastImage.cacheControl.immutable
-      }}
+      }
+
+  return (
+    <FastImage
+      style={style}
+      source={imageSource}
       resizeMode={resizeMode}
       onError={handleError}
     />

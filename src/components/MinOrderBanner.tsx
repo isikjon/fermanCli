@@ -19,14 +19,20 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id);
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng);
     
+    const DEFAULT_DELIVERY_PRICE = 399
+    
     const getDeliveryPricing = () => {
-        if (!zoneName || deliveryData?.type !== 0) {
+        if (deliveryData?.type !== 0) {
             return { threshold349: 1500, thresholdFree: 3000, currentPrice: 0 };
+        }
+        
+        if (!zoneName) {
+            return { threshold349: 1500, thresholdFree: 3000, currentPrice: DEFAULT_DELIVERY_PRICE };
         }
 
         const zone = deliveryDataObj.zones.find(z => z.zone.name === zoneName.description);
         if (!zone) {
-            return { threshold349: 1500, thresholdFree: 3000, currentPrice: 399 };
+            return { threshold349: 1500, thresholdFree: 3000, currentPrice: DEFAULT_DELIVERY_PRICE };
         }
 
         const slot = zone.slots[0];
@@ -50,7 +56,6 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
         try {
             currentPrice = calculateDeliveryPrice(currentAmount, zoneName.description);
         } catch (error) {
-            console.log('❌ [MinOrderBanner] Error calculating delivery price:', error);
             currentPrice = 399;
         }
 
@@ -60,55 +65,41 @@ const MinOrderBanner: React.FC<Props> = ({ currentRoute }) => {
     const { threshold349, thresholdFree, currentPrice } = getDeliveryPricing();
 
     const getBannerText = () => {
-        // 1. Проверка минимального заказа (приоритет)
         if (currentAmount < minOrderAmount) {
             const remaining = minOrderAmount - currentAmount;
             return `Минимальный заказ ${minOrderAmount} руб. Добавьте ещё товаров на ${formatPrice(remaining)} руб.`;
         }
 
-        // 2. Только для доставки (не для самовывоза)
         if (deliveryData?.type === 0 && activeAddress) {
-            // 2a. Проверка порога 349 руб
-            if (threshold349 > 0 && currentAmount < threshold349) {
-                const remaining = threshold349 - currentAmount;
-                return `Доставка ${formatPrice(currentPrice)} руб., для снижения стоимости доставки до ${formatPrice(349)} руб. добавьте ещё ${formatPrice(remaining)} руб.`;
+            if (currentPrice === 0) {
+                return `🎉 Бесплатная доставка! Сумма товаров: ${formatPrice(currentAmount)} руб.`;
             }
 
-            // 2b. Проверка бесплатной доставки
-            if (thresholdFree > 0 && currentAmount < thresholdFree) {
+            if (currentPrice === 349 && thresholdFree > 0 && currentAmount < thresholdFree) {
                 const remaining = thresholdFree - currentAmount;
                 return `Доставка ${formatPrice(currentPrice)} руб., для бесплатной доставки добавьте ещё ${formatPrice(remaining)} руб.`;
             }
 
-            // 2c. Бесплатная доставка достигнута
-            if (currentAmount >= thresholdFree && thresholdFree > 0) {
-                return `🎉 Бесплатная доставка! Сумма товаров: ${formatPrice(currentAmount)} руб.`;
+            if (currentPrice > 349 && threshold349 > 0 && currentAmount < threshold349) {
+                const remaining = threshold349 - currentAmount;
+                return `Доставка ${formatPrice(currentPrice)} руб., для снижения до 349 руб. добавьте ещё ${formatPrice(remaining)} руб.`;
+            }
+
+            if (currentPrice > 0 && thresholdFree > 0 && currentAmount < thresholdFree) {
+                const remaining = thresholdFree - currentAmount;
+                return `Доставка ${formatPrice(currentPrice)} руб., для бесплатной доставки добавьте ещё ${formatPrice(remaining)} руб.`;
             }
         }
 
-        // 3. Просто показываем сумму заказа
         return `Сумма товаров: ${formatPrice(currentAmount)} руб.`;
     };
 
     const bannerText = getBannerText();
 
-    console.log('🎯 MinOrderBanner rendering:', {
-        currentRoute,
-        currentAmount,
-        minOrderAmount,
-        threshold349,
-        thresholdFree,
-        currentPrice,
-        bannerText,
-        hasAddress: !!activeAddress
-    });
-
-    // Показываем баннер только когда есть товары в корзине
     if (cartList.length === 0) {
         return null;
     }
 
-    // Скрываем на экранах где не нужен
     if (currentRoute === 'checkout' || currentRoute === 'orderSuccess' || currentRoute === 'welcome') {
         return null;
     }

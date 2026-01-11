@@ -67,8 +67,6 @@ const List = () => {
   )
 
   useEffect(() => {
-    console.log('🔄 [List useEffect] Triggered:', { id, category, activePage })
-    
     isMounted.current = true
     const requestKey = `products_${id}_${category}_${activePage}`
     const controller = requestManager.createCancellableRequest(requestKey)
@@ -79,8 +77,6 @@ const List = () => {
         try {
           if (!isMounted.current || controller.signal.aborted) return
           
-          console.log('📥 [List] Starting load products:', { mainCategoryId: id, subCategoryId: category })
-          
           performanceMonitor.logInteraction('Load Products', 'List')
           
           await Promise.race([
@@ -89,12 +85,7 @@ const List = () => {
               controller.signal.addEventListener('abort', () => reject(new Error('Aborted')))
             })
           ])
-          
-          console.log('✅ [List] Products loaded successfully')
         } catch (error: any) {
-          if (error?.message !== 'Aborted' && isMounted.current) {
-            console.log('❌ [List] Load products error:', error)
-          }
         }
       })
     }

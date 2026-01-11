@@ -24,14 +24,40 @@ const Form = () => {
     const [express, setExpress] = useState(false)
     const [comment, setComment] = useState('')
     const [bonusAmount, setBonusAmount] = useState(0)
+    const [localPromoCode, setLocalPromoCode] = useState('')
     const { deliveryData, addresses, getDelivery } = useDeliveryStore()
-    const { createOrder, deliveryTime, changeDeliveryTime, isCreatingOrder } = useCheckoutStore()
+    const { 
+        createOrder, 
+        deliveryTime, 
+        changeDeliveryTime, 
+        isCreatingOrder,
+        promoCode,
+        promoDiscount,
+        isCheckingPromo,
+        hasOrders,
+        isCheckingOrders,
+        setPromoCode,
+        checkPromoCode,
+        clearPromoCode,
+        checkUserOrders
+    } = useCheckoutStore()
     const { bonuses, calculateBonus, getBonuses } = useBonusStore()
     const bonusType = bonusAction === "writeOff" ? 0 : 1
 
+    const DEFAULT_DELIVERY_PRICE = 399
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
-    const deliveryPrice = deliveryData?.type === 0 ? zoneName ? calculateDeliveryPrice(calculateAmount(), zoneName.description, express) : 0 : 0
+    
+    const getDeliveryPrice = () => {
+        if (deliveryData?.type !== 0) return 0
+        if (!zoneName) return DEFAULT_DELIVERY_PRICE
+        try {
+            return calculateDeliveryPrice(calculateAmount(), zoneName.description, express)
+        } catch {
+            return DEFAULT_DELIVERY_PRICE
+        }
+    }
+    const deliveryPrice = getDeliveryPrice()
     const slotList = deliveryData?.type !== undefined ? getSlots(deliveryData?.type, express).array : []
     
     const minOrderAmount = 600
@@ -53,7 +79,23 @@ const Form = () => {
     useEffect(() => {
         getDelivery()
         getBonuses()
-    }, [getDelivery, getBonuses])
+        setLocalPromoCode(promoCode)
+        checkUserOrders()
+    }, [getDelivery, getBonuses, promoCode, checkUserOrders])
+    
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (localPromoCode.trim() !== promoCode) {
+                if (localPromoCode.trim() === '') {
+                    clearPromoCode()
+                } else {
+                    checkPromoCode(localPromoCode)
+                }
+            }
+        }, 500)
+        
+        return () => clearTimeout(handler)
+    }, [localPromoCode])
 
     useEffect(() => {
         const updateBonus = async () => {
@@ -187,6 +229,34 @@ const Form = () => {
                 <Select array={["СБП", "Наличные"]} onChange={value => setPaymentMethod(value)} value={paymentMethod} />
             </View>
 
+            {/* Промокод на первый заказ */}
+            {!isCheckingOrders && !hasOrders && (
+                <View style={styles.Group}>
+                    <Input
+                        onChange={setLocalPromoCode}
+                        label='Промокод на первый заказ'
+                        value={localPromoCode}
+                        placeholder='Введите промокод'
+                        withIcon={localPromoCode ? {
+                            component: Icons.Close,
+                            onClick: () => {
+                                setLocalPromoCode('')
+                                clearPromoCode()
+                            }
+                        } : undefined}
+                    />
+                    {isCheckingPromo && (
+                        <Txt size={12} color="#4FBD01">Проверка промокода...</Txt>
+                    )}
+                    {!isCheckingPromo && promoCode && promoDiscount > 0 && (
+                        <Txt size={12} color="#4FBD01">Промокод применён: скидка {promoDiscount} руб.</Txt>
+                    )}
+                    {!isCheckingPromo && localPromoCode && !promoCode && localPromoCode.trim() !== '' && (
+                        <Txt size={12} color="#FF0000">Промокод не найден или недействителен</Txt>
+                    )}
+                </View>
+            )}
+
             {/* Комментарий к заказу */}
             <View style={styles.Group}>
                 <Input
@@ -224,9 +294,16 @@ const Form = () => {
                     <Txt>{bonusType === 0 ? `-${bonusAmount}` : `+${bonusAmount}`}</Txt>
                 </Row>
 
+                {promoDiscount > 0 && (
+                    <Row>
+                        <Txt>Промокод</Txt>
+                        <Txt color="#4FBD01">-{formatPrice(promoDiscount)} руб.</Txt>
+                    </Row>
+                )}
+
                 <Row>
                     <Txt weight='Bold' size={16}>Стоимость заказа</Txt>
-                    <Txt weight='Bold' size={16}>{formatPrice(calculateAmount() + deliveryPrice - (bonusType === 0 ? bonusAmount : 0))} руб.</Txt>
+                    <Txt weight='Bold' size={16}>{formatPrice(calculateAmount() + deliveryPrice - (bonusType === 0 ? bonusAmount : 0) - promoDiscount)} руб.</Txt>
                 </Row>
             </View>
 

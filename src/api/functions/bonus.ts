@@ -10,16 +10,13 @@ export async function registerUser(phone: string, uuid: string) {
 }
 
 export async function getClient(phone: string) {
-    console.log('🔍 [API getClient] Requesting bonuses for phone:', phone)
     try {
         const response = await axios.post(`https://bonus.kilbil.ru/load/searchclient?h=${apiKey}`, {
             search_mode: 0,
             search_value: phone,
         })
-        console.log('✅ [API getClient] Response:', response.data)
         return response
     } catch (error) {
-        console.log('❌ [API getClient] ERROR:', error)
         throw error
     }
 }

@@ -22,20 +22,9 @@ const Controlls = () => {
     const [weightAmount, setWeightAmount] = useState(0.1)
 
     const checkInCart = useCallback(() => {
-        console.log('🔍 [Controlls] Checking if in cart:', {
-            productId: activeProduct?.id,
-            productName: activeProduct?.name?.substring(0, 30)
-        });
-
         if (cartList.some(i => i.id === activeProduct?.id)) {
             const cartData = cartList.find(i => i.id === activeProduct?.id)
             if (cartData) {
-                console.log('✅ [Controlls] Found in cart:', {
-                    amount: cartData.amount,
-                    weight: cartData.weight,
-                    isWeighted: activeProduct?.weighed
-                });
-
                 if (activeProduct?.weighed && cartData.weight !== undefined) {
                     setWeightAmount(cartData.weight)
                 } else {
@@ -44,19 +33,16 @@ const Controlls = () => {
             }
             setInCart(true)
         } else {
-            console.log('❌ [Controlls] Not in cart');
             setInCart(false)
             if (activeProduct?.id) {
                 const savedAmount = getSelectedAmount(activeProduct.id)
                 if (savedAmount !== undefined) {
-                    console.log('📝 [Controlls] Restoring saved amount:', savedAmount);
                     if (activeProduct.weighed) {
                         setWeightAmount(savedAmount)
                     } else {
                         setAmount(savedAmount)
                     }
                 } else {
-                    console.log('🔄 [Controlls] Resetting to default');
                     setAmount(1)
                     setWeightAmount(0.1)
                 }
@@ -98,15 +84,6 @@ const Controlls = () => {
                 <Counter 
                     amount={activeProduct.weighed ? weightAmount : amount} 
                     onChange={(value) => {
-                        console.log('🔄 [Controlls] Counter changed:', {
-                            productId: activeProduct.id,
-                            productName: activeProduct.name?.substring(0, 30),
-                            oldValue: activeProduct.weighed ? weightAmount : amount,
-                            newValue: value,
-                            inCart: inCart,
-                            isWeighed: activeProduct.weighed
-                        });
-
                         if (activeProduct.weighed) {
                             setWeightAmount(value)
                         } else {
@@ -117,7 +94,6 @@ const Controlls = () => {
                             setSelectedAmount(activeProduct.id, value)
 
                             if (inCart && cartItem) {
-                                console.log('🔄 [Controlls] Updating cart directly (item already in cart)');
                                 if (activeProduct.weighed) {
                                     changeCartItem(activeProduct.id, { ...cartItem, weight: value })
                                 } else {
@@ -137,22 +113,12 @@ const Controlls = () => {
                     <Button
                         onClick={() => {
                             if (activeProduct) {
-                                console.log('➕ [Controlls] Button clicked:', {
-                                    productId: activeProduct.id,
-                                    productName: activeProduct.name?.substring(0, 30),
-                                    amount: amount,
-                                    weightAmount: weightAmount,
-                                    inCart: inCart
-                                });
-
                                 if (inCart) {
-                                    console.log('🛒 [Controlls] Navigating to cart (item already in cart)');
                                     navigation.navigate('cart' as never)
                                     return
                                 }
                                 
                                 if (isOutOfStock) {
-                                    console.log('❌ [Controlls] Blocked: Out of stock');
                                     setMessage('Товар отсутствует в наличии', 'error')
                                     return
                                 }
@@ -160,16 +126,9 @@ const Controlls = () => {
                                 const addingAmount = activeProduct.weighed ? weightAmount : amount
                                 
                                 if (maxStock !== undefined && addingAmount > maxStock) {
-                                    console.log('❌ [Controlls] Blocked: Not enough stock', { addingAmount, maxStock });
                                     setMessage('На складе недостаточно товара', 'error')
                                     return
                                 }
-                                
-                                console.log('✅ [Controlls] Adding to cart:', {
-                                    amount: activeProduct.weighed ? 1 : amount,
-                                    weight: weightAmount,
-                                    isWeighted: activeProduct.weighed
-                                });
 
                                 setItemInCart({
                                     amount: activeProduct.weighed ? 1 : amount,

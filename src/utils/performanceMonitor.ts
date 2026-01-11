@@ -22,7 +22,6 @@ class PerformanceMonitor {
 
         if (delta >= 1000) {
             this.fps = Math.round((this.frameCount * 1000) / delta)
-            console.log(`📊 FPS: ${this.fps}`)
             this.frameCount = 0
             this.lastTime = currentTime
         }
@@ -41,8 +40,6 @@ class PerformanceMonitor {
     }
 
     logInteraction(action: string, screen: string) {
-        const timestamp = new Date().toISOString().split('T')[1].slice(0, -1)
-        console.log(`👆 [${timestamp}] ${screen} -> ${action}`)
     }
 
     async measureAsyncOperation<T>(
@@ -53,12 +50,8 @@ class PerformanceMonitor {
         
         try {
             const result = await operation()
-            const duration = (performance.now() - startTime).toFixed(2)
-            console.log(`⚡ ${operationName}: ${duration}ms`)
             return result
         } catch (error) {
-            const duration = (performance.now() - startTime).toFixed(2)
-            console.log(`❌ ${operationName} failed: ${duration}ms`)
             throw error
         }
     }
@@ -69,4 +62,3 @@ class PerformanceMonitor {
 }
 
 export const performanceMonitor = new PerformanceMonitor()
-

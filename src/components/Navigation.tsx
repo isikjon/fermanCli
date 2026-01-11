@@ -54,22 +54,31 @@ const Navigation = () => {
                     const isActiveRoute = isActive(item.link)
                     const iconColor = item.name === "избранное" && isActiveRoute ? "#EF2D45" : "#4FBD01"
                     
+                    const handlePress = () => {
+                        if (item.link === 'profile') {
+                            const { isAuth } = useGlobalStore.getState()
+                            navigate(isAuth ? 'profile' : 'auth')
+                        } else {
+                            navigate(item.link as any)
+                        }
+                    }
+
                     return (
                         <TouchableOpacity
                             key={index}
                             activeOpacity={0.5}
                             style={styles.NavItem}
-                            onPress={() => navigate(item.link as any)}
+                            onPress={handlePress}
                         >
                             <item.icon isBold={isActiveRoute} color={iconColor} width={28} height={28} />
-                            <Txt weight={isActiveRoute ? "Bold" : "Regular"} size={12}>{item.name}</Txt>
+                            <Txt weight={isActiveRoute ? "RobotoCondensed-Bold" : "RobotoCondensed-Regular"} size={12}>{item.name}</Txt>
 
                             {item.name === "корзина" && <View style={styles.Indicator}>
-                                <Txt weight='Bold' color='#F73106' size={14}>{cartList.length}</Txt>
+                                <Txt weight='RobotoCondensed-Bold' color='#F73106' size={14}>{cartList.length}</Txt>
                             </View>}
 
                             {item.name === "избранное" && <View style={styles.Indicator}>
-                                <Txt weight='Bold' color='#F73106' size={14}>{favoriteList.length}</Txt>
+                                <Txt weight='RobotoCondensed-Bold' color='#F73106' size={14}>{favoriteList.length}</Txt>
                             </View>}
                         </TouchableOpacity>
                     )

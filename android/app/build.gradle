@@ -83,8 +83,8 @@ android {
         applicationId "com.fermancli"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.2"
+        versionCode 9
+        versionName "1.9"
     }
     signingConfigs {
         debug {
@@ -117,4 +117,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // SMS Retriever API - override old version from react-native-sms-retriever
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    implementation 'com.google.android.gms:play-services-auth-api-phone:18.0.2'
 }

@@ -17,23 +17,17 @@ const Total = () => {
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
     
+    const DEFAULT_DELIVERY_PRICE = 399
     let deliveryPrice = 0
     if (deliveryData?.type === 0) {
         if (zoneName) {
             try {
                 deliveryPrice = calculateDeliveryPrice(calculateAmount(), zoneName.description)
-                console.log('💰 [Cart Total] Delivery price calculated:', {
-                    zone: zoneName.description,
-                    amount: calculateAmount(),
-                    deliveryPrice: deliveryPrice
-                })
             } catch (error) {
-                console.log('❌ [Cart Total] Error calculating delivery price:', error)
-                deliveryPrice = 0
+                deliveryPrice = DEFAULT_DELIVERY_PRICE
             }
         } else {
-            console.log('⚠️ [Cart Total] No zone found for address')
-            deliveryPrice = 0
+            deliveryPrice = DEFAULT_DELIVERY_PRICE
         }
     }
     
@@ -47,7 +41,6 @@ const Total = () => {
 
     function checkout() {
         if (!isMinOrderMet) {
-            console.log('Минимальная сумма заказа не достигнута');
             return;
         }
 

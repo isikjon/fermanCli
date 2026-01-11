@@ -90,10 +90,69 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
     openedOrderPositions: [],
     deliveryTime: "",
     isCreatingOrder: false,
+    promoCode: "",
+    promoDiscount: 0,
+    promoCodeId: null,
+    isCheckingPromo: false,
+    hasOrders: false,
+    isCheckingOrders: false,
 
     changeDeliveryTime: (value: string) => set({ deliveryTime: value }),
     changeAfterAuth: (value: boolean) => set({ afterAuth: value }),
     changeOpenedOrderId: (value: string) => set({ openedOrderId: value }),
+    
+    setPromoCode: (code: string) => set({ promoCode: code }),
+    
+    checkPromoCode: async (code: string) => {
+        if (!code || code.trim() === "") {
+            set({ promoCode: "", promoDiscount: 0, promoCodeId: null })
+            return
+        }
+        
+        set({ isCheckingPromo: true })
+        try {
+            const result = await api.order.checkPromoCode(code.trim())
+            if (result.valid) {
+                set({ 
+                    promoCode: code.trim(), 
+                    promoDiscount: result.discount, 
+                    promoCodeId: result.id,
+                    isCheckingPromo: false
+                })
+            } else {
+                set({ 
+                    promoCode: code.trim(), 
+                    promoDiscount: 0, 
+                    promoCodeId: null,
+                    isCheckingPromo: false
+                })
+            }
+        } catch (error) {
+            set({ 
+                promoCode: code.trim(), 
+                promoDiscount: 0, 
+                promoCodeId: null,
+                isCheckingPromo: false
+            })
+        }
+    },
+    
+    clearPromoCode: () => set({ promoCode: "", promoDiscount: 0, promoCodeId: null }),
+    
+    checkUserOrders: async () => {
+        try {
+            set({ isCheckingOrders: true })
+            const customerId = await get().getCustomer()
+            if (customerId) {
+                const orders = await api.order.getOrders(customerId)
+                set({ hasOrders: orders.length > 0, isCheckingOrders: false })
+            } else {
+                set({ hasOrders: false, isCheckingOrders: false })
+            }
+        } catch (error) {
+            set({ hasOrders: false, isCheckingOrders: false })
+        }
+    },
 
     getCustomer: async () => {
         try {
@@ -103,25 +162,16 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             const { userData } = useAuthStore.getState()
             const { formData } = useProfileStore.getState()
 
-            console.log('📞 [getCustomer] phoneNumber:', userData.phoneNumber)
             const response = await api.order.getCustomer(userData.phoneNumber)
-            console.log('👥 [getCustomer] Response size:', response.meta.size)
 
             if (response.meta.size !== 0) {
-                console.log('✅ [getCustomer] Found existing customer:', response.rows[0].id)
                 return response.rows[0].id
             } else {
                 const userName = formData.fullName === "" ? userData.phoneNumber : formData.fullName
-                console.log('➕ [getCustomer] Creating new customer:', userName)
                 const newCustomer = await api.order.createCustomer(userName, userData.phoneNumber)
-                console.log('✅ [getCustomer] New customer created:', newCustomer.data.id)
                 return newCustomer.data.id
             }
         } catch (error: any) {
-            console.log('❌ [getCustomer] ERROR:', error)
-            if (error?.response) {
-                console.log('❌ [getCustomer] ERROR Response:', error.response.data)
-            }
             return undefined
         }
     },
@@ -129,7 +179,6 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
     createOrder: async (bonusType: number, express: boolean, comment?: string) => {
         try {
             set({ isCreatingOrder: true })
-            console.log('🔄 [createOrder] Loading started...')
             
             const { default: useNotificationStore } = await import('../notification')
             const { default: useCartStore } = await import('../cart')
@@ -138,15 +187,14 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             
             const { setMessage } = useNotificationStore.getState()
 
-            console.log('🛒 [createOrder] START')
             const { getCustomer, deliveryTime } = get()
             const { clearCart, cartList, calculateAmount } = useCartStore.getState()
             const { addresses, deliveryData } = useDeliveryStore.getState()
             const { calculateBonus } = useBonusStore.getState()
 
             const customerId = await getCustomer()
-            console.log('👤 [createOrder] customerId:', customerId)
 
+            const DEFAULT_DELIVERY_PRICE = 399
             const address = addresses.find((_, index) => index === deliveryData?.id)
             const zone = address && getZoneForLocation(address?.lat, address?.lng)
             const storeQueue = resolveStoreQueueFromDelivery(deliveryData, addresses)
@@ -156,10 +204,18 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
                 ? selfPickupList[pickupCityIndex]?.list?.[deliveryData?.id || 0]
                 : undefined
             const bonusAmount = await calculateBonus(bonusType, express)
-            const deliveryPrice = zone ? calculateDeliveryPrice(calculateAmount(), zone?.description, express) : 0
-            const totalAmount = calculateAmount() + deliveryPrice - bonusAmount
-
-            console.log('📦 [createOrder] totalAmount:', totalAmount, 'deliveryPrice:', deliveryPrice, 'bonusAmount:', bonusAmount)
+            
+            let deliveryPrice = DEFAULT_DELIVERY_PRICE
+            if (deliveryData?.type === 1) {
+                deliveryPrice = 0
+            } else if (zone) {
+                try {
+                    deliveryPrice = calculateDeliveryPrice(calculateAmount(), zone.description, express)
+                } catch {
+                    deliveryPrice = DEFAULT_DELIVERY_PRICE
+                }
+            }
+            const orderAmount = calculateAmount()
 
             const items: OrderItemType[] = cartList.map(i => ({
                 amount: Number((i.isWeighted && i.weight) ? (i.amount * i.weight).toFixed(1) : i.amount),
@@ -173,17 +229,20 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
             }]
 
             if (!storeId) {
-                console.log('❌ [createOrder] No storeId for delivery', { storeQueue })
                 setMessage("Не удалось подобрать склад для заказа", "error")
+                set({ isCreatingOrder: false })
                 return
             }
 
             if (deliveryTime === "") {
-                console.log('❌ [createOrder] No deliveryTime')
                 setMessage(`Укажите время ${deliveryData?.type === 0 ? "доставки" : "самовывоза"}`, "error")
+                set({ isCreatingOrder: false })
                 return
             }
 
+            const { promoCode, promoCodeId, promoDiscount } = get()
+            const totalAmount = orderAmount + deliveryPrice - bonusAmount - promoDiscount
+            
             const payload: IOrder = {
                 bonuses: {
                     amount: bonusAmount,
@@ -199,36 +258,30 @@ const useCheckoutStore = create<State>()(devtools((set, get) => ({
                 },
                 items: deliveryData?.type === 1 ? items : itemsWithDelivery,
                 storeId: storeId,
-                comment: comment || ""
+                comment: comment || "",
+                promoCode: promoCode && promoCodeId ? {
+                    code: promoCode,
+                    discount: promoDiscount,
+                    id: promoCodeId
+                } : undefined
             }
 
-            console.log('📤 [createOrder] Sending to API:', JSON.stringify(payload, null, 2))
             const response = await api.order.createOrder(payload)
-            console.log('✅ [createOrder] API Response:', response?.data)
 
             const orderNumber = response?.data?.name || 'Неизвестен'
-            console.log('📋 [createOrder] Order number:', orderNumber)
 
             clearCart()
             
             await NotificationService.updateLastOrderDate()
-            console.log('📅 Last order date updated')
 
-            console.log('🧭 [createOrder] Navigating to orderSuccess with amount:', totalAmount, 'number:', orderNumber)
+            const finalAmount = orderAmount + deliveryPrice - (bonusType === 0 ? bonusAmount : 0) - promoDiscount
             
             set({ isCreatingOrder: false })
-            console.log('✅ [createOrder] Loading completed')
             
-            navigate('orderSuccess', { orderAmount: totalAmount, orderNumber: orderNumber })
+            navigate('orderSuccess', { orderAmount: finalAmount, orderNumber: orderNumber })
 
         } catch (error: any) {
-            console.log('❌ [createOrder] ERROR:', error)
-            if (error?.response) {
-                console.log('❌ [createOrder] ERROR Response:', error.response.data)
-            }
-            
             set({ isCreatingOrder: false })
-            console.log('❌ [createOrder] Loading stopped (error)')
             
             const { default: useNotificationStore } = await import('../notification')
             const { setMessage } = useNotificationStore.getState()

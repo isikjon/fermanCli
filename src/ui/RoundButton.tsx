@@ -10,14 +10,8 @@ const RoundButton: FC<Props> = ({ children, onClick }) => {
     return (
         <TouchableOpacity
             onPress={() => {
-                console.log('🔴 [RoundButton] TouchableOpacity onPress сработал!')
-                console.log('🔴 [RoundButton] onClick функция:', typeof onClick, onClick ? 'есть' : 'НЕТ')
                 if (onClick) {
-                    console.log('🔴 [RoundButton] Вызываю onClick()...')
                     onClick()
-                    console.log('🔴 [RoundButton] onClick() выполнен')
-                } else {
-                    console.warn('⚠️ [RoundButton] onClick не определен!')
                 }
             }}
             activeOpacity={0.5}

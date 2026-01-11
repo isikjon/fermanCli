@@ -122,12 +122,24 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef, showBanners = false }) => 
                         value={localSearch}
                         onChange={setLocalSearch}
                         onFocus={scrollToSearch}
+                        onSubmit={() => {
+                            if (searchList.length > 0) {
+                                changeEnableScroll(true)
+                                setLocalSearch("")
+                                navigation.navigate('product', { id: searchList[0].id })
+                            }
+                        }}
                     />
                 )}
 
                 {localSearch.length > 0 && searchList.length > 0 && (
                     <View style={styles.SearchBox}>
-                        <ScrollView style={styles.SearchBoxScroll}>
+                        <ScrollView 
+                            style={styles.SearchBoxScroll}
+                            nestedScrollEnabled={true}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={true}
+                        >
                             {searchList.map(item => (
                                 <TouchableOpacity
                                     key={item.id}
@@ -139,7 +151,7 @@ const Header: FC<Props> = ({ isHideSearch, scrollRef, showBanners = false }) => 
                                         navigation.navigate('product', { id: item.id })
                                     }}
                                 >
-                                    <Txt weight="Bold" size={16} lines={1} lineHeight={22}>{item.name}</Txt>
+                                    <Txt weight="RobotoCondensed-Bold" size={16} numberOfLines={2}>{item.name}</Txt>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
@@ -203,7 +215,7 @@ const styles = StyleSheet.create({
         padding: 20,
         top: 55
     },
-    SearchBoxScroll: { maxHeight: 150 },
+    SearchBoxScroll: { maxHeight: 300 },
     SearchBoxItem: { paddingBottom: 12 },
     SearchContainer: { 
         position: "relative",
@@ -223,8 +235,8 @@ const styles = StyleSheet.create({
     },
     BannerItem: {
         position: "relative",
-        width: 120,
-        height: 120,
+        width: 170,
+        aspectRatio: 0.67,
         borderRadius: 16,
         overflow: "hidden",
         marginRight: 16
@@ -240,6 +252,6 @@ const styles = StyleSheet.create({
         left: 10,
         flex: 1,
         zIndex: 1,
-        width: 100
+        width: 150
     }
 })

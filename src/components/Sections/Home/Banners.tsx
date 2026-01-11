@@ -2,6 +2,9 @@ import { Image, FlatList, StyleSheet, View } from 'react-native'
 import React from 'react'
 import { bannersList } from '../../../constants'
 
+const BANNER_WIDTH = 170
+const BANNER_RATIO = 0.67
+
 const Banners = () => {
     return (
         <FlatList
@@ -29,8 +32,8 @@ const styles = StyleSheet.create({
     },
     BannerItem: {
         position: "relative",
-        width: 150,
-        height: 160,
+        width: BANNER_WIDTH,
+        aspectRatio: BANNER_RATIO,
         borderRadius: 16,
         overflow: "hidden",
         marginRight: 16

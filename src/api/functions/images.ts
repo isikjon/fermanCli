@@ -37,7 +37,7 @@ export async function getMoyskladImageUrl(productId: string): Promise<string> {
     }
 
     const firstImage = rows[0]
-    const downloadUrl = firstImage?.miniature?.downloadHref || firstImage?.tiny?.downloadHref
+    const downloadUrl = firstImage?.meta?.downloadHref || firstImage?.miniature?.downloadHref || firstImage?.tiny?.downloadHref
 
     if (downloadUrl) {
       imageCache[productId] = downloadUrl
@@ -46,7 +46,6 @@ export async function getMoyskladImageUrl(productId: string): Promise<string> {
 
     return ''
   } catch (error) {
-    console.log('❌ [getMoyskladImageUrl] Error:', productId, error)
     return ''
   }
 }
@@ -81,7 +80,7 @@ export async function getMoyskladVariantImageUrl(productId: string): Promise<str
     }
 
     const firstImage = rows[0]
-    const downloadUrl = firstImage?.miniature?.downloadHref || firstImage?.tiny?.downloadHref
+    const downloadUrl = firstImage?.meta?.downloadHref || firstImage?.miniature?.downloadHref || firstImage?.tiny?.downloadHref
 
     if (downloadUrl) {
       imageCache[productId] = downloadUrl
@@ -90,8 +89,6 @@ export async function getMoyskladVariantImageUrl(productId: string): Promise<str
 
     return ''
   } catch (error) {
-    console.log('❌ [getMoyskladVariantImageUrl] Error:', productId, error)
     return ''
   }
 }
-

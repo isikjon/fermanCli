@@ -14,9 +14,7 @@ import CDN_CONFIG from './cdn'
  */
 export function getCDNImageUrl(productId: string, index: number = 0): string {
   try {
-    // Проверяем что CDN включен
     if (!CDN_CONFIG.enabled) {
-      console.log('ℹ️ [CDN] CDN disabled, no URL returned')
       return ''
     }
     
@@ -31,7 +29,6 @@ export function getCDNImageUrl(productId: string, index: number = 0): string {
     const filename = productImages[index]
     
     if (!filename) {
-      console.log(`⚠️ [CDN] Image index ${index} not found for product: ${productId}`)
       return ''
     }
     
@@ -41,7 +38,6 @@ export function getCDNImageUrl(productId: string, index: number = 0): string {
     return fullUrl
     
   } catch (error) {
-    console.error('❌ [CDN] Error getting image URL:', error)
     return ''
   }
 }
@@ -64,7 +60,6 @@ export function getAllProductImages(productId: string): string[] {
     )
     
   } catch (error) {
-    console.error('❌ [CDN] Error getting all images:', error)
     return []
   }
 }

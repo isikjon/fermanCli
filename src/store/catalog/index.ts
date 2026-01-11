@@ -101,21 +101,17 @@ const useCatalogStore = create<CachedState>()(
             },
 
             getImage: (productId: string, index?: number) => {
-                // Теперь просто возвращаем CDN URL
                 return api.products.getImage(productId, index || 0)
             },
 
             preloadImages: async (productIds: string[]) => {
             },
 
-
-            // Поиск по текущему значению из стора (оставлено для обратной совместимости)
             searchProduct: async () => {
                 const { search } = get()
                 await get().searchProductByName(search)
             },
 
-            // Поиск по явно переданному имени — чтобы избежать гонок при changeSearch()
             searchProductByName: async (name: string) => {
                 const { searchCache } = get()
                 if (name.length === 0) {
@@ -149,11 +145,9 @@ const useCatalogStore = create<CachedState>()(
                         activeProduct: response
                     })
 
-                    // Получаем CDN URL изображения
                     const imageUrl = getImage(response.image, 0)
                     set({ activeProductImage: imageUrl || null })
                 } catch (error) {
-                    console.log(error)
                 }
             },
 
@@ -161,11 +155,8 @@ const useCatalogStore = create<CachedState>()(
                 try {
                     const { isLoading: currentlyLoading } = get()
                     if (currentlyLoading) {
-                        console.log('⏳ [getDataFromAtributes] Already loading, skipping...')
                         return
                     }
-                    
-                    console.log('🔄 [getDataFromAtributes] START - Attribute ID:', id)
                     
                     const startTime = Date.now()
                     set({ isLoading: true })
@@ -173,23 +164,14 @@ const useCatalogStore = create<CachedState>()(
                     const storeQueue = resolveStoreQueue()
                     const response = await api.products.getProductFromAtributes(id, storeQueue)
                     
-                    console.log('📥 [getDataFromAtributes] Response from API:', {
-                        productsCount: response?.length || 0,
-                        isArray: Array.isArray(response)
-                    })
-                    
                     const elapsed = Date.now() - startTime
                     const minLoadTime = 500
                     if (elapsed < minLoadTime) {
                         await new Promise(resolve => setTimeout(resolve, minLoadTime - elapsed))
                     }
                     
-                    console.log('💾 [getDataFromAtributes] Setting productWithAtrList with', response?.length || 0, 'products')
                     set({ isLoading: false, productWithAtrList: response })
-                    
-                    console.log('✅ [getDataFromAtributes] COMPLETE')
                 } catch (error) {
-                    console.error('❌ [getDataFromAtributes] ERROR:', error)
                     set({ isLoading: false })
                 }
             },

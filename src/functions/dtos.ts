@@ -11,7 +11,6 @@ type CategoryNode = ICategory & {
 export function CategoryDTO(data: ICategory[]) {
     const pathMap = new Map<string, CategoryNode>()
 
-    // Сначала создаём узлы с иконками и пустыми подкатегориями
     data.forEach(category => {
         pathMap.set(category.name, {
             ...category,
@@ -24,22 +23,19 @@ export function CategoryDTO(data: ICategory[]) {
 
     pathMap.forEach(node => {
         if (!node.pathName) {
-            // Корневая категория
             tree.push(node)
         } else {
-            const parentName = node.pathName.split("/").slice(-1)[0] // берем последнюю категорию в pathName
+            const parentName = node.pathName.split("/").slice(-1)[0]
             const parent = pathMap.get(parentName)
 
             if (parent) {
                 parent.subCategory.push(node)
             } else {
-                // Если родителя не нашли — добавляем в корень
                 tree.push(node)
             }
         }
     })
 
-    // Сортировка
     const sortFn = (a: CategoryNode, b: CategoryNode) => {
         const nameCompare = a.name.localeCompare(b.name, "ru")
         if (a.icon && !b.icon) return -1
@@ -65,16 +61,12 @@ type ProductDTOOptions = {
 
 export function ProductDTO(data: any, options?: ProductDTOOptions) {
     if (!data || !Array.isArray(data)) {
-        console.log('⚠️ [ProductDTO] Invalid data provided:', typeof data);
         return [];
     }
-
-    console.log('📦 [ProductDTO] Processing', data.length, 'products');
 
     const formattedArray: ProductType[] = data
         .filter(product => {
             if (!product || !product.id) {
-                console.log('⚠️ [ProductDTO] Skipping product without id');
                 return false;
             }
             return true;
@@ -127,11 +119,10 @@ export function ProductDTO(data: any, options?: ProductDTOOptions) {
                     price = product.salePrices[0]?.value ? product.salePrices[0].value / 100 : 0;
                 }
                 
-                // Сохраняем product.id как image - URL сформируем через getCDNImageUrl
                 const imageUrl = product.id;
                 
                 const formattedProduct = {
-                    image: imageUrl, // Теперь это product.id для CDN маппинга
+                    image: imageUrl,
                     price: price,
                     name: product?.name || 'Без названия',
                     id: product.id,
@@ -146,23 +137,12 @@ export function ProductDTO(data: any, options?: ProductDTOOptions) {
                     storeId: resolvedStoreId
                 } as ProductType;
 
-                if (price === 0) {
-                    console.log('⚠️ [ProductDTO] Product with zero price:', product.name, 'id:', product.id);
-                }
-
-                if (stock !== undefined && stock <= 0) {
-                    console.log('⚠️ [ProductDTO] Product out of stock:', product.name?.substring(0, 50), 'stock:', stock, 'id:', product.id);
-                }
-
                 return formattedProduct;
             } catch (error) {
-                console.log('❌ [ProductDTO] Error processing product:', product?.name, 'id:', product?.id, 'error:', error);
                 return null;
             }
         })
         .filter((item: ProductType | null): item is ProductType => item !== null);
-
-    console.log('✅ [ProductDTO] Successfully processed', formattedArray.length, 'products');
 
     return formattedArray;
 }

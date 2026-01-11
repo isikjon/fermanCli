@@ -3,6 +3,9 @@ import React from 'react'
 import { bannersList } from '../../../constants'
 import Txt from '../../../ui/Text'
 
+const BANNER_WIDTH = 170
+const BANNER_RATIO = 0.67
+
 const Banners = () => {
     return (
         <View style={styles.Container}>
@@ -42,8 +45,8 @@ const styles = StyleSheet.create({
     },
     BannerItem: {
         position: "relative",
-        width: 120,
-        height: 120,
+        width: BANNER_WIDTH,
+        aspectRatio: BANNER_RATIO,
         borderRadius: 16,
         overflow: "hidden",
         marginRight: 16
@@ -59,7 +62,7 @@ const styles = StyleSheet.create({
         left: 10,
         flex: 1,
         zIndex: 1,
-        width: 100,
+        width: 120,
     },
     Container: {
         gap: 16

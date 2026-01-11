@@ -281,12 +281,17 @@ export function orderPayload(data: IOrder) {
     const positions = postitionsDTO(data.items)
 
 
+    const descriptionParts = [`${data.bonuses.type === 0 ? "-" : "+"}${data.bonuses.amount} Бонусов`]
+    if (data.promoCode) {
+        descriptionParts.push(`Промокод: ${data.promoCode.code} (скидка ${data.promoCode.discount} руб.)`)
+    }
+
     return {
         organization,
         agent,
         attributes,
         store,
-        description: `${data.bonuses.type === 0 ? "-" : "+"}${data.bonuses.amount} Бонусов`,
+        description: descriptionParts.join(", "),
         shipmentAddress: data.delivery.address,
         positions,
         tags: ["Мобильное приложение"],

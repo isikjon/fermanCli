@@ -21,37 +21,18 @@ const Preview = () => {
     const isMounted = useRef(true)
     
     const isExist = useMemo(() => {
-        const exists = favoriteList.some(item => item.id === productId)
-        console.log('Проверка избранного для товара:', productId, 'Результат:', exists, 'Список:', favoriteList.length)
-        return exists
+        return favoriteList.some(item => item.id === productId)
     }, [favoriteList, productId])
 
     const handleShare = useCallback(async () => {
-        console.log('🔘 [Share] ========== КНОПКА ПОДЕЛИТЬСЯ НАЖАТА ==========')
-        console.log('🔘 [Share] Время:', new Date().toISOString())
-        
-        console.log('📋 [Share] Проверка activeProduct:', {
-            exists: !!activeProduct,
-            productId: activeProduct?.id,
-            productName: activeProduct?.name,
-            price: activeProduct?.price,
-            weighed: activeProduct?.weighed
-        })
-
         if (!activeProduct) {
-            console.error('❌ [Share] ОШИБКА: activeProduct не найден!')
             setMessage('Товар не загружен', 'error')
             return
         }
 
         try {
-            console.log('📝 [Share] Формирование сообщения и ссылки...')
             const shareMessage = generateShareMessage(activeProduct)
             const shareUrl = generateShareUrl(activeProduct)
-            
-            console.log('📤 [Share] Сообщение для sharing:', shareMessage)
-            console.log('🔗 [Share] Ссылка на продукт:', shareUrl)
-            console.log('📤 [Share] Вызов Share.share()...')
             
             const result = await Share.share({
                 message: shareMessage,
@@ -59,35 +40,10 @@ const Preview = () => {
                 title: activeProduct.name
             })
 
-            console.log('📥 [Share] Результат Share.share():', {
-                action: result.action,
-                activityType: result.activityType,
-                sharedAction: Share.sharedAction,
-                dismissedAction: Share.dismissedAction
-            })
-
             if (result.action === Share.sharedAction) {
-                console.log('✅ [Share] Успешно поделились!')
-                if (result.activityType) {
-                    console.log('📱 [Share] Использован канал:', result.activityType)
-                    setMessage('Спасибо за то, что делитесь!', 'success')
-                } else {
-                    console.log('📱 [Share] Поделились (канал неизвестен)')
-                    setMessage('Спасибо за то, что делитесь!', 'success')
-                }
-            } else if (result.action === Share.dismissedAction) {
-                console.log('❌ [Share] Пользователь отменил sharing')
-            } else {
-                console.log('⚠️ [Share] Неизвестный результат action:', result.action)
+                setMessage('Спасибо за то, что делитесь!', 'success')
             }
-            
-            console.log('🔘 [Share] ========== ОБРАБОТКА ЗАВЕРШЕНА ==========')
         } catch (error: any) {
-            console.error('❌ [Share] ========== ПРОИЗОШЛА ОШИБКА ==========')
-            console.error('❌ [Share] Тип ошибки:', typeof error)
-            console.error('❌ [Share] Ошибка:', error)
-            console.error('❌ [Share] Сообщение ошибки:', error?.message)
-            console.error('❌ [Share] Stack trace:', error?.stack)
             setMessage('Не удалось поделиться товаром', 'error')
         }
     }, [activeProduct, setMessage])
@@ -108,10 +64,8 @@ const Preview = () => {
         }
 
         if (isExist) {
-            console.log('Удаляем из избранного:', activeProduct.id)
             removeItemFromFav(activeProduct.id)
         } else {
-            console.log('Добавляем в избранное:', activeProduct.id)
             addItemToFav(payload)
         }
     }, [activeProduct, isExist, removeItemFromFav, addItemToFav])
@@ -123,21 +77,11 @@ const Preview = () => {
     )
 
     useEffect(() => {
-        console.log('🎬 [Preview] Компонент смонтирован')
-        console.log('🎬 [Preview] productId из route:', productId)
-        console.log('🎬 [Preview] handleShare функция создана:', typeof handleShare)
         isMounted.current = true
         return () => {
-            console.log('🎬 [Preview] Компонент размонтирован')
             isMounted.current = false
         }
     }, [productId, handleShare])
-
-    console.log('🔄 [Preview] RENDER - activeProduct:', activeProduct ? {
-        id: activeProduct.id,
-        name: activeProduct.name?.substring(0, 30),
-        exists: true
-    } : 'НЕТ ТОВАРА')
 
     return (
         <View style={styles.Preview}>
@@ -159,16 +103,10 @@ const Preview = () => {
                 </RoundButton>
 
                 <View style={styles.Share}>
-                    <RoundButton onClick={() => {
-                        console.log('🖱️ [Preview] RoundButton для Share был нажат!')
-                        handleShare()
-                    }}>
+                    <RoundButton onClick={handleShare}>
                         <Icons.Share />
                     </RoundButton>
-                    <RoundButton onClick={() => {
-                        console.log('🖱️ [Preview] RoundButton для Like был нажат!')
-                        handleLike()
-                    }}>
+                    <RoundButton onClick={handleLike}>
                         <Icons.Heard isBold={isExist} color={isExist ? "#EF2D45" : "#4D4D4D"} />
                     </RoundButton>
                 </View>

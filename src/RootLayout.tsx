@@ -16,7 +16,6 @@ import {
 } from 'react-native-safe-area-context';
 import { initializeDeepLinking } from './utils/deepLinking';
 
-// Временные заглушки для компонентов (будем создавать постепенно) 
 import HomeScreen from './pages/home';
 import Navigation from './components/Navigation';
 import WelcomeScreen from './components/WelcomeScreen';
@@ -69,25 +68,20 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Кастомная тема с белым фоном
 const CustomTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#ffffff', // Цвет фона между переходами
+    background: '#ffffff',
   },
 };
 
 function RootLayout() {
-  console.log('🏗️ [RootLayout] Component mounting...')
   const [currentRoute, setCurrentRoute] = useState('welcome');
   const { isAuth, isDeliverySet, hideNavigation } = useGlobalStore();
   const { isOpen: isAddressModalOpen, closeModal: closeAddressModal } = useAddressModalStore();
 
-  console.log('📊 [RootLayout] State:', { isAuth, isDeliverySet, hideNavigation })
-
   useEffect(() => {
-    console.log('⚙️ [RootLayout] Setting up navigation callback')
     setNavigationCallback((route: string, reset?: boolean) => {
       if (navigationRef.current?.isReady()) {
         if (reset) {
@@ -101,11 +95,9 @@ function RootLayout() {
       }
     });
 
-    console.log('🔗 [RootLayout] Initializing deep linking')
     const cleanupDeepLinking = initializeDeepLinking()
 
     return () => {
-      console.log('🔗 [RootLayout] Cleaning up deep linking')
       cleanupDeepLinking()
     }
   }, []);
@@ -117,7 +109,6 @@ function RootLayout() {
     }
   };
 
-  // Определяем когда показывать навигацию
   const isDeliveryRequired = isAuth && !isDeliverySet;
   const isAuthRequired = !isAuth;
   const showNavigation = currentRoute !== 'welcome' && 
@@ -140,8 +131,8 @@ function RootLayout() {
             <Stack.Navigator 
               screenOptions={{ 
                 headerShown: false,
-                animation: 'fade', // Плавная анимация без белого экрана
-                contentStyle: { backgroundColor: '#ffffff' }, // Фон экранов
+                animation: 'fade',
+                contentStyle: { backgroundColor: '#ffffff' },
               }} 
               initialRouteName="welcome"
             >
