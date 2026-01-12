@@ -36,20 +36,10 @@ const List = () => {
 
   useEffect(() => {
     if (!id) {
-      console.log('⚠️ [Atributes] No ID provided');
       return;
     }
-    console.log('🔄 [Atributes] Loading products for attribute:', id);
     getDataFromAtributes(id);
   }, [id, activePage]);
-
-  useEffect(() => {
-    console.log('📊 [Atributes] productWithAtrList updated:', {
-      count: productWithAtrList?.length || 0,
-      isArray: Array.isArray(productWithAtrList),
-      firstProduct: productWithAtrList?.[0]?.name
-    });
-  }, [productWithAtrList]);
 
   return (
     <View style={styles.Container}>

@@ -11,7 +11,7 @@ import { generateShareMessage, generateShareUrl } from '../../../utils/shareProd
 
 const Reviews = () => {
     const { activeProduct } = useCatalogStore()
-    const { favoriteList, addFavoriteItem, removeFavoriteItem } = useFavoriteStore()
+    const { favoriteList, addItemToFav, removeItemFromFav } = useFavoriteStore()
     const { setMessage } = useNotificationStore()
 
     const isFavorite = useMemo(() => {
@@ -22,10 +22,10 @@ const Reviews = () => {
         if (!activeProduct) return
 
         if (isFavorite) {
-            removeFavoriteItem(activeProduct.id)
+            removeItemFromFav(activeProduct.id)
             setMessage('Удалено из избранного', 'success')
         } else {
-            addFavoriteItem({
+            addItemToFav({
                 id: activeProduct.id,
                 name: activeProduct.name,
                 price: activeProduct.price,
@@ -38,7 +38,7 @@ const Reviews = () => {
             })
             setMessage('Добавлено в избранное', 'success')
         }
-    }, [activeProduct, isFavorite, addFavoriteItem, removeFavoriteItem, setMessage])
+    }, [activeProduct, isFavorite, addItemToFav, removeItemFromFav, setMessage])
 
     const handleShare = useCallback(async () => {
         if (!activeProduct) {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Txt from '../ui/Text';
@@ -21,9 +21,6 @@ const OrderSuccess: React.FC<OrderSuccessProps> = ({ route }) => {
     const orderAmount = route?.params?.orderAmount || 0;
     const orderNumber = route?.params?.orderNumber || '';
 
-    useEffect(() => {
-        console.log('✅ [OrderSuccess] Opened with amount:', orderAmount, 'number:', orderNumber);
-    }, []);
 
     const handleGoHome = () => {
         navigation.reset({

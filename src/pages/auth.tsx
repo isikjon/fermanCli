@@ -19,7 +19,6 @@ const auth = () => {
     const insets = useSafeAreaInsets()
 
     const handleSkip = async () => {
-        console.log('Skipping auth, setting isFirstLaunch to false')
         setFirstLaunch(false)
         setTimeout(() => {
             if (!isDeliverySet) {

@@ -23,7 +23,6 @@ const Atribute: React.FC = () => {
             try {
                 await getDataFromAtributes(id);
             } catch (e) {
-                console.error(e);
             } finally {
                 setIsLoading(false);
             }

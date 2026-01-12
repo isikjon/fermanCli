@@ -12,13 +12,11 @@ const useFavoriteStore = create<State>()(devtools((set, get) => ({
         
         const exists = favorite.some(i => i.id === item.id);
         if (exists) {
-            console.log('Товар уже в избранном:', item.id);
             return;
         }
         
         const newArray = [...favorite, item];
 
-        console.log('Добавление в избранное:', item.id, 'Было:', favorite.length, 'Стало:', newArray.length);
         set({ favoriteList: newArray });
         await AsyncStorage.setItem("favoriteData", JSON.stringify(newArray));
     },
@@ -26,7 +24,6 @@ const useFavoriteStore = create<State>()(devtools((set, get) => ({
         const favorite = get().favoriteList;
         const filteredData = favorite.filter(item => item.id !== id);
 
-        console.log('Удаление из избранного:', id, 'Было:', favorite.length, 'Стало:', filteredData.length);
         set({ favoriteList: filteredData });
         await AsyncStorage.setItem("favoriteData", JSON.stringify(filteredData));
     },

@@ -73,7 +73,6 @@ const useDeliveryStore = create<State>()(devtools((set, get) => ({
             const response = await api.delivery.getSugesstionAdreses(query)
             set({ suggestionList: response.data.suggestions })
         } catch (error) {
-            console.log(error)
         }
     },
     checkDeliverySet: async () => {

@@ -28,8 +28,6 @@ const Delivery = () => {
         if (deliveryData) {
             setDeliverySet(true);
             navigation.navigate('home' as never);
-        } else {
-            console.log('Пожалуйста, выберите способ получения заказа');
         }
     };
 

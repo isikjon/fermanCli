@@ -175,21 +175,15 @@ export function calculateDeliveryPrice(
         // Находим ближайший будущий слот, иначе берём первый
         const nearestSlot = sortedSlots.find(slot => timeToMinutes(slot.time) > currentMinutes) || sortedSlots[0];
 
-        // Ищем нужный диапазон по цене
         const priceBracket = nearestSlot.order.find(
             bracket => totalPrice >= bracket.from && totalPrice <= bracket.to
         );
 
-        console.log(priceBracket)
-
         return priceBracket?.price ?? 0;
     } else {
-        // 5. Если слоты без time/name — просто берём нужную цену по totalPrice
         const priceBracket: any = slots.find(
             (slot: any) => totalPrice >= slot.from && totalPrice <= slot.to
         );
-
-        console.log(priceBracket)
 
         return priceBracket?.price ?? 0;
     }

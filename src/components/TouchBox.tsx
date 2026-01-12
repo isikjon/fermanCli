@@ -15,17 +15,7 @@ const TouchBox: FC<Props> = ({ onClick, children, isFull, padding = 25, height =
         <TouchableOpacity
             activeOpacity={0.5}
             style={[styles.TouchBox, { width: isFull ? "100%" : "auto", flex: isFull ? 1 : 0, paddingHorizontal: padding, height, backgroundColor: background }]}
-            onPress={() => {
-                console.log('🟢 [TouchBox] TouchableOpacity onPress сработал!')
-                console.log('🟢 [TouchBox] onClick функция:', typeof onClick, onClick ? 'есть' : 'НЕТ')
-                if (onClick) {
-                    console.log('🟢 [TouchBox] Вызываю onClick()...')
-                    onClick()
-                    console.log('🟢 [TouchBox] onClick() выполнен')
-                } else {
-                    console.warn('⚠️ [TouchBox] onClick не определен!')
-                }
-            }}>
+            onPress={onClick}>
             {children}
         </TouchableOpacity>
     )

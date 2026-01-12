@@ -21,54 +21,19 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   resizeMode = 'cover',
   emptyStyle
 }) => {
-  const [imageUrl, setImageUrl] = useState<string>('')
+  const [imageUrl, setImageUrl] = useState<string>(() => getCDNImageUrl(productId, index))
   const [needsAuth, setNeedsAuth] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    let isMounted = true
-
-    const loadImage = async () => {
-      setIsLoading(true)
-      
-      try {
-        let moyskladUrl = await getMoyskladImageUrl(productId)
-        
-        if (!moyskladUrl) {
-          moyskladUrl = await getMoyskladVariantImageUrl(productId)
-        }
-        
-        if (moyskladUrl && isMounted) {
-          setImageUrl(moyskladUrl)
-          setNeedsAuth(true)
-          setHasError(false)
-          setIsLoading(false)
-          return
-        }
-      } catch (error) {
-      }
-      
-      const cdnUrl = getCDNImageUrl(productId, index)
-      
-      if (cdnUrl && isMounted) {
-        setImageUrl(cdnUrl)
-        setNeedsAuth(false)
-        setHasError(false)
-      } else if (isMounted) {
-        setImageUrl('')
-        setHasError(true)
-      }
-      
-      if (isMounted) {
-        setIsLoading(false)
-      }
-    }
-
-    loadImage()
-
-    return () => {
-      isMounted = false
+    const cdnUrl = getCDNImageUrl(productId, index)
+    if (cdnUrl) {
+      setImageUrl(cdnUrl)
+      setNeedsAuth(false)
+      setHasError(false)
+    } else {
+      setImageUrl('')
+      setHasError(true)
     }
   }, [productId, index])
 
@@ -149,4 +114,3 @@ export default memo(OptimizedImage, (prevProps, nextProps) => {
     prevProps.index === nextProps.index
   )
 })
-
