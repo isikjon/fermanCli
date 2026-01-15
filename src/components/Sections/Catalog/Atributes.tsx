@@ -51,7 +51,7 @@ const List = () => {
         renderItem={({ item }) => <ProductCard item={item} />}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingBottom: isPagination ? 140 : 70,
+          paddingBottom: isPagination ? 140 : 100,
           minHeight: Dimensions.get('window').height,
         }}
         initialNumToRender={6}
@@ -75,7 +75,7 @@ const List = () => {
       />
 
       {isPagination && (
-        <View style={styles.Container}>
+        <View style={[styles.Container, { marginBottom: 120 }]}>
           <Pagination
             onChange={(value) => {
               getDataFromAtributes(id);

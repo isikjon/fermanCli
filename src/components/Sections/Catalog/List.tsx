@@ -180,11 +180,11 @@ const styles = StyleSheet.create({
   },
   FlatListContent: {
     flexGrow: 1,
-    paddingBottom: 80,
+    paddingBottom: 140,
   },
   PaginationContainer: {
     marginTop: 16,
-    marginBottom: '5%',
+    marginBottom: 120,
     alignItems: 'center',
   },
   EmptyContainer: {
