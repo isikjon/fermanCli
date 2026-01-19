@@ -33,6 +33,10 @@ const List = () => {
 
   const screenWidth = Dimensions.get('window').width;
   const itemWidth = (screenWidth - 32 - 24) / 2;
+  
+  const GREEN_PRICES_ID = '762d57da-1191-11ee-0a80-043600051b3e';
+  const isGreenPrices = id === GREEN_PRICES_ID;
+  const showPagination = isPagination && !isGreenPrices;
 
   useEffect(() => {
     if (!id) {
@@ -51,7 +55,7 @@ const List = () => {
         renderItem={({ item }) => <ProductCard item={item} />}
         contentContainerStyle={{
           flexGrow: 1,
-          paddingBottom: isPagination ? 140 : 100,
+          paddingBottom: isGreenPrices ? 200 : (showPagination ? 140 : 100),
           minHeight: Dimensions.get('window').height,
         }}
         initialNumToRender={6}
@@ -74,7 +78,7 @@ const List = () => {
         }
       />
 
-      {isPagination && (
+      {showPagination && (
         <View style={[styles.Container, { marginBottom: 120 }]}>
           <Pagination
             onChange={(value) => {

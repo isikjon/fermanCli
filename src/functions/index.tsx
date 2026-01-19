@@ -136,12 +136,8 @@ export function calculateDeliveryPrice(
     totalPrice: number,
     zoneName: string,
     express?: boolean,
+    selectedSlotTime?: string,
 ): number {
-    // 1. Получаем текущее время по Владивостоку, считая от UTC (избегаем локальной TZ)
-    const now = new Date();
-    const vladHours = (now.getUTCHours() + 10 + 24) % 24; // UTC+10
-    const currentMinutes = vladHours * 60 + now.getUTCMinutes();
-
     // 2. Ищем нужную зону
     const zone = deliveryDataObj.zones.find(z => z.zone.name === zoneName);
     if (!zone) {
@@ -162,20 +158,28 @@ export function calculateDeliveryPrice(
     if (isNamedSlot(slots[0])) {
         const namedSlots = slots as NamedSlot[];
 
-        // 4. Выбор ближайшего слота по времени
-        const timeToMinutes = (timeRange: string) => {
-            const [start] = timeRange.split(' - ');
-            const [hours, minutes] = start.split(':').map(Number);
-            return hours * 60 + minutes;
-        };
+        let selectedSlot: NamedSlot | undefined;
 
-        // Сортируем слоты по времени начала
-        const sortedSlots = namedSlots.slice().sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+        if (selectedSlotTime) {
+            selectedSlot = namedSlots.find(slot => slot.time === selectedSlotTime);
+        }
 
-        // Находим ближайший будущий слот, иначе берём первый
-        const nearestSlot = sortedSlots.find(slot => timeToMinutes(slot.time) > currentMinutes) || sortedSlots[0];
+        if (!selectedSlot) {
+            const now = new Date();
+            const vladHours = (now.getUTCHours() + 10 + 24) % 24;
+            const currentMinutes = vladHours * 60 + now.getUTCMinutes();
 
-        const priceBracket = nearestSlot.order.find(
+            const timeToMinutes = (timeRange: string) => {
+                const [start] = timeRange.split(' - ');
+                const [hours, minutes] = start.split(':').map(Number);
+                return hours * 60 + minutes;
+            };
+
+            const sortedSlots = namedSlots.slice().sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+            selectedSlot = sortedSlots.find(slot => timeToMinutes(slot.time) > currentMinutes) || sortedSlots[0];
+        }
+
+        const priceBracket = selectedSlot.order.find(
             bracket => totalPrice >= bracket.from && totalPrice <= bracket.to
         );
 

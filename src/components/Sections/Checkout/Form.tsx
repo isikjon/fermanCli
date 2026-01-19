@@ -1,6 +1,7 @@
 import { StyleSheet, TouchableOpacity, View, Dimensions, ActivityIndicator } from 'react-native'
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, NavigationProp } from '@react-navigation/native'
+import { RootStackParamList } from '../../../RootLayout'
 import Row from '../../../components/Row'
 import Txt from '../../../ui/Text'
 import Input from '../../../ui/Input'
@@ -17,7 +18,7 @@ import useCheckoutStore from '../../../store/checkout'
 import CartItem from '../../../ui/CartItem'
 
 const Form = () => {
-    const navigation = useNavigation()
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>()
     const { calculateAmount, cartList } = useCartStore()
     const [bonusAction, setBonusAction] = useState<"save" | "writeOff">("save")
     const [paymentMethod, setPaymentMethod] = useState(0)
@@ -47,18 +48,23 @@ const Form = () => {
     const DEFAULT_DELIVERY_PRICE = 399
     const activeAddress = deliveryData?.type === 0 && addresses.find((_, index) => index === deliveryData.id)
     const zoneName = activeAddress && getZoneForLocation(activeAddress.lat, activeAddress.lng)
+    const slotList = deliveryData?.type !== undefined ? getSlots(deliveryData?.type, express).array : []
+    
+    const selectedSlot = slotList.find(slot => slot.id === deliveryTime)
+    const selectedSlotTime = selectedSlot?.value 
+        ? selectedSlot.value.replace(/^(Сегодня, |Завтра, )/, '').trim()
+        : undefined
     
     const getDeliveryPrice = () => {
         if (deliveryData?.type !== 0) return 0
         if (!zoneName) return DEFAULT_DELIVERY_PRICE
         try {
-            return calculateDeliveryPrice(calculateAmount(), zoneName.description, express)
+            return calculateDeliveryPrice(calculateAmount(), zoneName.description, express, selectedSlotTime)
         } catch {
             return DEFAULT_DELIVERY_PRICE
         }
     }
     const deliveryPrice = getDeliveryPrice()
-    const slotList = deliveryData?.type !== undefined ? getSlots(deliveryData?.type, express).array : []
     
     const minOrderAmount = 600
     const currentAmount = calculateAmount()
@@ -98,12 +104,16 @@ const Form = () => {
     }, [localPromoCode])
 
     useEffect(() => {
+        if (deliveryData?.type === 1) {
+            setBonusAmount(0)
+            return
+        }
         const updateBonus = async () => {
             const amount = await calculateBonus(bonusType, express)
             setBonusAmount(amount)
         }
         updateBonus()
-    }, [bonusType, express, calculateBonus])
+    }, [bonusType, express, calculateBonus, deliveryData?.type])
 
     useEffect(() => {
         if (slotList.length === 0) {
@@ -165,17 +175,23 @@ const Form = () => {
             }
 
             {/* Адрес доставки/самовывоза */}
-            <TouchableOpacity activeOpacity={0.5} onPress={() => navigation.navigate("delivery")}>
-                <Input
-                    onChange={() => ({})}
-                    label={`Адрес ${deliveryData?.type === 0 ? "доставки" : "самовывоза"}`}
-                    value={fillDeliveryAddress()}
-                    withIcon={{
-                        component: Icons.ArrowRight,
-                        onClick: () => ({})
-                    }}
-                    readonly
-                />
+            <TouchableOpacity 
+                activeOpacity={0.5} 
+                onPress={() => navigation.navigate("delivery")}
+                style={{ width: '100%' }}
+            >
+                <View pointerEvents="none">
+                    <Input
+                        onChange={() => ({})}
+                        label={`Адрес ${deliveryData?.type === 0 ? "доставки" : "самовывоза"}`}
+                        value={fillDeliveryAddress()}
+                        withIcon={{
+                            component: Icons.ArrowRight,
+                            onClick: () => ({})
+                        }}
+                        readonly
+                    />
+                </View>
             </TouchableOpacity>
 
             {/* Время доставки/самовывоза */}
@@ -192,36 +208,38 @@ const Form = () => {
             </View>
 
             {/* Бонусы */}
-            <View style={styles.Bonus}>
-                <Input
-                    onChange={() => ({})}
-                    label='Бонусы бурёнки'
-                    value={String(bonuses)}
-                    readonly
-                />
+            {deliveryData?.type !== 1 && (
+                <View style={styles.Bonus}>
+                    <Input
+                        onChange={() => ({})}
+                        label='Бонусы бурёнки'
+                        value={String(bonuses)}
+                        readonly
+                    />
 
-                <Row>
-                    <View style={styles.FlexBox}>
-                        <Button
-                            height={56}
-                            background={bonusAction === "writeOff" ? "#4FBD01" : "#EEEEEE"}
-                            onClick={() => setBonusAction("writeOff")}
-                        >
-                            <Txt color={bonusAction === "writeOff" ? "#fff" : "#4D4D4D"} size={16} weight='Bold'>Списать</Txt>
-                        </Button>
-                    </View>
+                    <Row>
+                        <View style={styles.FlexBox}>
+                            <Button
+                                height={56}
+                                background={bonusAction === "writeOff" ? "#4FBD01" : "#EEEEEE"}
+                                onClick={() => setBonusAction("writeOff")}
+                            >
+                                <Txt color={bonusAction === "writeOff" ? "#fff" : "#4D4D4D"} size={16} weight='Bold'>Списать</Txt>
+                            </Button>
+                        </View>
 
-                    <View style={styles.FlexBox}>
-                        <Button
-                            height={56}
-                            background={bonusAction === "save" ? "#4FBD01" : "#EEEEEE"}
-                            onClick={() => setBonusAction("save")}
-                        >
-                            <Txt color={bonusAction === "save" ? "#fff" : "#4D4D4D"} size={16} weight='Bold'>Копить</Txt>
-                        </Button>
-                    </View>
-                </Row>
-            </View>
+                        <View style={styles.FlexBox}>
+                            <Button
+                                height={56}
+                                background={bonusAction === "save" ? "#4FBD01" : "#EEEEEE"}
+                                onClick={() => setBonusAction("save")}
+                            >
+                                <Txt color={bonusAction === "save" ? "#fff" : "#4D4D4D"} size={16} weight='Bold'>Копить</Txt>
+                            </Button>
+                        </View>
+                    </Row>
+                </View>
+            )}
 
             {/* Способ оплаты */}
             <View style={styles.Group}>
@@ -289,10 +307,12 @@ const Form = () => {
                     </Row>
                 }
 
-                <Row>
-                    <Txt>Бонусы</Txt>
-                    <Txt>{bonusType === 0 ? `-${bonusAmount}` : `+${bonusAmount}`}</Txt>
-                </Row>
+                {deliveryData?.type !== 1 && (
+                    <Row>
+                        <Txt>Бонусы</Txt>
+                        <Txt>{bonusType === 0 ? `-${bonusAmount}` : `+${bonusAmount}`}</Txt>
+                    </Row>
+                )}
 
                 {promoDiscount > 0 && (
                     <Row>
@@ -303,7 +323,7 @@ const Form = () => {
 
                 <Row>
                     <Txt weight='Bold' size={16}>Стоимость заказа</Txt>
-                    <Txt weight='Bold' size={16}>{formatPrice(calculateAmount() + deliveryPrice - (bonusType === 0 ? bonusAmount : 0) - promoDiscount)} руб.</Txt>
+                    <Txt weight='Bold' size={16}>{formatPrice(calculateAmount() + deliveryPrice - (deliveryData?.type === 1 ? 0 : (bonusType === 0 ? bonusAmount : 0)) - promoDiscount)} руб.</Txt>
                 </Row>
             </View>
 
@@ -311,7 +331,8 @@ const Form = () => {
                 height={56} 
                 onClick={() => {
                     if (!isCreatingOrder) {
-                        createOrder(bonusType, express, comment)
+                        const finalBonusType = deliveryData?.type === 1 ? 1 : bonusType
+                        createOrder(finalBonusType, express, comment)
                     }
                 }}
                 disabled={isOrderDisabled || isCreatingOrder}
